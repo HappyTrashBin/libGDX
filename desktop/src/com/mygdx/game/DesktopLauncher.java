@@ -13,7 +13,7 @@ public class DesktopLauncher {
 		int height = constant.height;
 		config.setResizable(false);
 		config.setWindowedMode(width,height);
-		config.setForegroundFPS(60);
+		config.setForegroundFPS(constant.FPS);
 		config.setTitle("My GDX Game");
 		new Lwjgl3Application(new MyGdxGame(), config);
 	}
