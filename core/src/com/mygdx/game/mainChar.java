@@ -5,13 +5,13 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Vector2;
 
 public class mainChar {
-    private float size;
+    private Const constant = new Const();
+    private final float size = constant.size;
     private final Vector2 position = new Vector2();
     private final Texture texture;
-    public mainChar(float x, float y, float s) {
+    public mainChar(float x, float y) {
         texture = new Texture("badlogic.jpg");
         position.set(x, y);
-        size = s;
     }
     public void render (Batch batch) {
         batch.draw(texture, position.x, position.y, size, size);
@@ -19,7 +19,6 @@ public class mainChar {
     public void dispose () {
         texture.dispose();
     }
-
     public void moveTo(Vector2 direction) {
         position.add(direction);
     }

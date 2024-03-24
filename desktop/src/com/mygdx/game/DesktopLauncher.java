@@ -5,12 +5,14 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import com.mygdx.game.MyGdxGame;
 import com.sun.org.apache.xerces.internal.impl.dv.xs.FullDVFactory;
 
-// Please note that on macOS your application needs to be started with the -XstartOnFirstThread JVM argument
 public class DesktopLauncher {
 	public static void main (String[] arg) {
 		Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
+		Const constant = new Const();
+		int width = constant.width;
+		int height = constant.height;
 		config.setResizable(false);
-		config.setWindowedMode(1600,900);
+		config.setWindowedMode(width,height);
 		config.setForegroundFPS(60);
 		config.setTitle("My GDX Game");
 		new Lwjgl3Application(new MyGdxGame(), config);

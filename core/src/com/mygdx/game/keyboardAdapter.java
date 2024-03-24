@@ -9,7 +9,15 @@ public class keyboardAdapter extends InputAdapter {
     private boolean rightPressed;
     private boolean upPressed;
     private boolean downPressed;
+    private Const constant = new Const();
+    private final float size = constant.size;
+    private final float halfSize = size/2;
+    private final float maxWidth = constant.width - size;
+    private final float minWidth = 0;
+    private final float maxHeight = constant.height - size;
+    private final float minHeight = 0;
     private final Vector2 direction = new Vector2();
+    private Vector2 currentPosition = new Vector2(constant.width/2 - halfSize,constant.height/2 - halfSize);
 
     @Override
     public boolean keyDown(int keycode) {
@@ -30,10 +38,12 @@ public class keyboardAdapter extends InputAdapter {
     }
     public Vector2 getDirection() {
         direction.set(0,0);
-        if (leftPressed) direction.add(-5,0);
-        if (rightPressed) direction.add(5,0);
-        if (upPressed) direction.add(0,5);
-        if (downPressed) direction.add(0,-5);
+        if ((leftPressed) && (currentPosition.x > minWidth)) direction.add(-5,0);
+        if ((rightPressed) && (currentPosition.x < maxWidth)) direction.add(5,0);
+        if ((upPressed) && (currentPosition.y < maxHeight)) direction.add(0,5);
+        if ((downPressed) && (currentPosition.y > minHeight)) direction.add(0,-5);
+        currentPosition.add(direction.x,direction.y);
+
         return direction;
     }
 }
