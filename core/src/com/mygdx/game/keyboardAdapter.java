@@ -9,7 +9,7 @@ public class keyboardAdapter extends InputAdapter {
     private boolean rightPressed;
     private boolean upPressed;
     private boolean downPressed;
-    private Const constant = new Const();
+    private final Const constant = new Const();
     private final float size = constant.size;
     private final float halfSize = size/2;
     private final float maxWidth = constant.width - size;
