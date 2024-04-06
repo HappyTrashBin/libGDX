@@ -10,7 +10,10 @@ public class mainChar {
     private final Vector2 position = new Vector2();
     private final Texture texture;
     public mainChar(float x, float y) {
-        texture = new Texture("badlogic.jpg");
+        this(x, y, "badlogic.jpg");
+    }
+    public mainChar(float x, float y, String textureName) {
+        texture = new Texture(textureName);
         position.set(x, y);
     }
     public void render (Batch batch) {
@@ -22,4 +25,5 @@ public class mainChar {
     public void moveTo(Vector2 direction) {
         position.add(direction);
     }
+    public Vector2 getPosition() {return position;};
 }
