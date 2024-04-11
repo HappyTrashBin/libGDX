@@ -9,6 +9,7 @@ public class keyboardAdapter extends InputAdapter {
     private boolean rightPressed;
     private boolean upPressed;
     private boolean downPressed;
+    private boolean spacePressed;
     private final Const constant = new Const();
     private final float size = constant.size;
     private final float halfSize = size/2;
@@ -25,6 +26,7 @@ public class keyboardAdapter extends InputAdapter {
         if (keycode == Input.Keys.D) rightPressed = true;
         if (keycode == Input.Keys.W) upPressed = true;
         if (keycode == Input.Keys.S) downPressed = true;
+        if (keycode == Input.Keys.SPACE) spacePressed = true;
         return false;
     }
 
@@ -34,6 +36,7 @@ public class keyboardAdapter extends InputAdapter {
         if (keycode == Input.Keys.D) rightPressed = false;
         if (keycode == Input.Keys.W) upPressed = false;
         if (keycode == Input.Keys.S) downPressed = false;
+        if (keycode == Input.Keys.SPACE) spacePressed = false;
         return false;
     }
     public Vector2 getDirection() {
@@ -45,5 +48,8 @@ public class keyboardAdapter extends InputAdapter {
         currentPosition.add(direction.x,direction.y);
 
         return direction;
+    }
+    public boolean goFromTitle(){
+        return spacePressed;
     }
 }
