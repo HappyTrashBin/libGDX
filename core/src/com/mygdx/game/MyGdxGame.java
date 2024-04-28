@@ -3,10 +3,17 @@ package com.mygdx.game;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 import java.util.ArrayList;
@@ -15,156 +22,98 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class MyGdxGame extends ApplicationAdapter {
-	private final Const constant = new Const();
-	private Screen currentScreen = Screen.TITLE;
-	private final float size = constant.charSize;
-	private final float halfSize = constant.charSize /2;
-	private final float width = constant.width;
-	private final float height = constant.height;
 	private SpriteBatch batch;
-	private BitmapFont font;
-	private newChar me;
-	private List<newChar> enemies = new ArrayList<>();
-	private List<Projectile> projectiles;
-	private final keyboardAdapter inputProcessor = new keyboardAdapter();
-	private final Vector2 goTo = new Vector2(1,1);
-	private final int speedConst = constant.speedMultiplier;
-	private float spawnTime = 0f;
-	private float shootingTime = 0f;
-	private final float spawnPeriod = constant.spawnPeriod;
+	private OrthographicCamera camera;
+	private World world;
+	private Body player, rightBoarder, leftBoarder,upBoarder,downBoarder, enemy;
+	private Box2DDebugRenderer b2dr;
+	private float PPM = 32;
 	@Override
 	public void create () {
-		Gdx.input.setInputProcessor(inputProcessor);
-		batch = new SpriteBatch();
-		font = new BitmapFont();
-		me = new newChar(width/2 - halfSize, height/2 - halfSize);
-		enemies = newEnemies();
-		projectiles = new ArrayList<>();
+		float w = Gdx.graphics.getWidth();
+		float h = Gdx.graphics.getHeight();
+
+		camera = new OrthographicCamera();
+		camera.setToOrtho(false, w/2, h/2);
+
+		world = new World(new Vector2(0,0), false);
+		b2dr = new Box2DDebugRenderer();
+
+		player = createBox(300,300,32, 32, false);
+		rightBoarder = createBox(0,0,1,900, true);
+		leftBoarder = createBox(800,0,1,900, true);
+		upBoarder = createBox(0,450,1600,1, true);
+		downBoarder = createBox(0,0,1600,1, true);
+		enemy = createBox(500, 300, 32,32,false);
 	}
 	@Override
 	public void render () {
-		if (currentScreen == Screen.TITLE) {
-			batch.begin();
-			ScreenUtils.clear(0, 0, 1, 1);
-			font.draw(batch, "Title Screen!", Gdx.graphics.getWidth()*.5f - 45, Gdx.graphics.getHeight() * .5f);
-			font.draw(batch, "Press SPACE", Gdx.graphics.getWidth()*.5f - 47, Gdx.graphics.getHeight() * .5f - 50);
-			if (inputProcessor.space()) currentScreen = Screen.MAIN_GAME;
-			batch.end();
-		}
-		else if (currentScreen == Screen.MAIN_GAME) {
-			batch.begin();
-			me.moveTo(inputProcessor.getDirection());
-			ScreenUtils.clear(1, 1, 1, 1);
-			enemies.forEach(enemy -> {
-				enemy.render(batch);
-				float xD = me.getPosition().x - enemy.getPosition().x;
-				float yD = me.getPosition().y - enemy.getPosition().y;
-				float vector = (float) Math.sqrt(Math.pow(xD, 2) + Math.pow(yD, 2));
-				float normalX = xD / vector;
-				float normalY = yD / vector;
-				goTo.set(speedConst * normalX, speedConst * normalY);
-				if (collisionDetector(enemy, me)) {
-					enemy.moveTo(goTo);
-				}
-				else {
-					currentScreen = Screen.GAME_OVER;
-				}
-			});
-			if (constant.genNewEnemies) {
-				spawnTime += Gdx.graphics.getDeltaTime();
-				if (spawnTime > spawnPeriod) {
-					spawnTime -= spawnPeriod;
-					int x = MathUtils.random(Gdx.graphics.getWidth());
-					int y = MathUtils.random(Gdx.graphics.getHeight());
-					newChar newEnemy = new newChar(x, y, "RedC.png");
-					enemies.add(newEnemy);
-				}
-			}
+		update();
+		Gdx.gl.glClearColor(0,0,0,1);
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-			projectiles.forEach(proj -> {
-				proj.render(batch);
-				float xD = proj.getPoint().x - proj.getPosition().x;
-				float yD = proj.getPoint().y - proj.getPosition().y;
-				float vector = (float) Math.sqrt(Math.pow(xD, 2) + Math.pow(yD, 2));
-				float normalX = xD / vector;
-				float normalY = yD / vector;
-				proj.moveTo(new Vector2(8*normalX,8*normalY));
-			});
-			if ((Gdx.input.isButtonPressed(Input.Buttons.LEFT))&&(shootingTime == 0)) {
-				shootingTime = 0.4f;
-				Projectile newProjectile = new Projectile(
-						me.getPosition().x+24,
-						me.getPosition().y+24,
-						Gdx.input.getX(),
-						height-Gdx.input.getY(),
-						"YellowC.png");
-				projectiles.add(newProjectile);
-			}
-			if (shootingTime > 0) {
-				shootingTime -= Gdx.graphics.getDeltaTime();
-			} else if (shootingTime < 0) {
-				shootingTime = 0;
-			}
-
-			me.render(batch);
-			batch.end();
-		}
-		else if (currentScreen == Screen.GAME_OVER) {
-			batch.begin();
-			ScreenUtils.clear(0, 0, 0, 1);
-			font.draw(batch, "Game over!", Gdx.graphics.getWidth()*.5f - 45, Gdx.graphics.getHeight() * .5f);
-			font.draw(batch, "Press SPACE", Gdx.graphics.getWidth()*.5f - 47, Gdx.graphics.getHeight() * .5f - 50);
-			if (inputProcessor.space()) {
-				currentScreen = Screen.MAIN_GAME;
-				me.dispose();
-				me = new newChar(width/2 - halfSize, height/2 - halfSize);
-				enemies.forEach(enemy -> {
-					enemy.dispose();
-				});
-				enemies = newEnemies();
-				projectiles.forEach(proj -> {
-					proj.dispose();
-				});
-				projectiles = new ArrayList<>();
-			};
-			batch.end();
-		}
+		b2dr.render(world, camera.combined.scl(PPM));
+	}
+	@Override
+	public void resize(int width, int height) {
+		camera.setToOrtho(false, width/2, height/2);
 	}
 	@Override
 	public void dispose () {
-		batch.dispose();
-		me.dispose();
-		font.dispose();
-		enemies.forEach(enemy -> {
-			enemy.dispose();
-		});
-		projectiles.forEach(proj -> {
-			proj.dispose();
-		});
+		world.dispose();
+		b2dr.dispose();
 	}
-	public boolean collisionDetector(newChar obj1, newChar obj2) {
-		return (obj1.getPosition().x + size < obj2.getPosition().x || obj2.getPosition().x + size < obj1.getPosition().x)
-				||
-				(obj1.getPosition().y + size < obj2.getPosition().y || obj2.getPosition().y + size < obj1.getPosition().y);
+	public void update() {
+		world.step(1/60f, 6, 2);
+
+		inputUpdate();
+		cameraUpdate();
+		enemyUpdate();
 	}
-	public List<newChar> newEnemies() {
-		List<newChar> enemies = new ArrayList<>();
-		List<newChar> newEnemies = IntStream.range(0, 2)
-				.mapToObj(i -> {
-					int x = MathUtils.random(Gdx.graphics.getWidth());
-					int y = MathUtils.random(Gdx.graphics.getHeight());
-					return new newChar(x, y, "RedC.png");
-				})
-				.collect(Collectors.toList());
-		enemies.addAll(newEnemies);
-		newEnemies = IntStream.range(0, 2)
-				.mapToObj(i -> {
-					int x = MathUtils.random(Gdx.graphics.getWidth());
-					int y = MathUtils.random(Gdx.graphics.getHeight());
-					return new newChar(x, y, "YellowC.png");
-				})
-				.collect(Collectors.toList());
-		enemies.addAll(newEnemies);
-		return enemies;
+	public void inputUpdate() {
+		int horizontalForce = 0;
+		int verticalForce = 0;
+
+		if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+			horizontalForce -= 1;
+		}
+		if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+			horizontalForce += 1;
+		}
+		if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
+			verticalForce += 1;
+		}
+		if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+			verticalForce -= 1;
+		}
+		player.setLinearVelocity(horizontalForce * 5, verticalForce * 5);
 	}
+	public void cameraUpdate() {
+		camera.update();
+	}
+	public void enemyUpdate() {
+		float Dx = (player.getPosition().x * PPM - enemy.getPosition().x * PPM);
+		float Dy = (player.getPosition().y * PPM - enemy.getPosition().y * PPM);
+		float vector = (float) Math.sqrt(Dx*Dx + Dy*Dy);
+		enemy.setLinearVelocity(Dx/vector, Dy/vector);
+	}
+	public Body createBox(int x, int y, int width, int height, boolean isStatic) {
+		Body pBody;
+		BodyDef def = new BodyDef();
+
+		if (isStatic) def.type = BodyDef.BodyType.StaticBody;
+		else def.type = BodyDef.BodyType.DynamicBody;
+		def.position.set(x/PPM,y/PPM);
+		def.fixedRotation = true;
+
+		pBody = world.createBody(def);
+
+		PolygonShape shape = new PolygonShape();
+		shape.setAsBox(width/2 / PPM, height/2 / PPM);
+
+		pBody.createFixture(shape, 1.0f);
+		shape.dispose();
+		return pBody;
+	}
+
 }
