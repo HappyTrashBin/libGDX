@@ -10,7 +10,7 @@ public class newChar {
     private final Vector2 position = new Vector2();
     private final Texture texture;
     public newChar(float x, float y) {
-        this(x, y, "Main_char.png");
+        this(x, y, "BlueC.png");
     }
     public newChar(float x, float y, String textureName) {
         texture = new Texture(textureName);

@@ -66,8 +66,9 @@ public class MyGdxGame extends ApplicationAdapter {
 				if (collisionDetector(enemy, me)) {
 					enemy.moveTo(goTo);
 				}
-
-
+				else {
+					currentScreen = Screen.GAME_OVER;
+				}
 			});
 			if (constant.genNewEnemies) {
 				spawnTime += Gdx.graphics.getDeltaTime();
@@ -75,10 +76,11 @@ public class MyGdxGame extends ApplicationAdapter {
 					spawnTime -= spawnPeriod;
 					int x = MathUtils.random(Gdx.graphics.getWidth());
 					int y = MathUtils.random(Gdx.graphics.getHeight());
-					newChar newEnemy = new newChar(x, y, "Red_enemy.png");
+					newChar newEnemy = new newChar(x, y, "RedC.png");
 					enemies.add(newEnemy);
 				}
 			}
+
 			projectiles.forEach(proj -> {
 				proj.render(batch);
 				float xD = proj.getPoint().x - proj.getPosition().x;
@@ -86,7 +88,7 @@ public class MyGdxGame extends ApplicationAdapter {
 				float vector = (float) Math.sqrt(Math.pow(xD, 2) + Math.pow(yD, 2));
 				float normalX = xD / vector;
 				float normalY = yD / vector;
-				proj.moveTo(new Vector2(5*normalX,5*normalY));
+				proj.moveTo(new Vector2(8*normalX,8*normalY));
 			});
 			if ((Gdx.input.isButtonPressed(Input.Buttons.LEFT))&&(shootingTime == 0)) {
 				shootingTime = 0.4f;
@@ -95,7 +97,7 @@ public class MyGdxGame extends ApplicationAdapter {
 						me.getPosition().y+24,
 						Gdx.input.getX(),
 						height-Gdx.input.getY(),
-						"Yellow_enemy.png");
+						"YellowC.png");
 				projectiles.add(newProjectile);
 			}
 			if (shootingTime > 0) {
@@ -105,8 +107,6 @@ public class MyGdxGame extends ApplicationAdapter {
 			}
 
 			me.render(batch);
-			System.out.println(spawnTime);
-			System.out.println(Gdx.graphics.getDeltaTime());
 			batch.end();
 		}
 		else if (currentScreen == Screen.GAME_OVER) {
@@ -116,8 +116,15 @@ public class MyGdxGame extends ApplicationAdapter {
 			font.draw(batch, "Press SPACE", Gdx.graphics.getWidth()*.5f - 47, Gdx.graphics.getHeight() * .5f - 50);
 			if (inputProcessor.space()) {
 				currentScreen = Screen.MAIN_GAME;
+				me.dispose();
 				me = new newChar(width/2 - halfSize, height/2 - halfSize);
+				enemies.forEach(enemy -> {
+					enemy.dispose();
+				});
 				enemies = newEnemies();
+				projectiles.forEach(proj -> {
+					proj.dispose();
+				});
 				projectiles = new ArrayList<>();
 			};
 			batch.end();
@@ -131,6 +138,9 @@ public class MyGdxGame extends ApplicationAdapter {
 		enemies.forEach(enemy -> {
 			enemy.dispose();
 		});
+		projectiles.forEach(proj -> {
+			proj.dispose();
+		});
 	}
 	public boolean collisionDetector(newChar obj1, newChar obj2) {
 		return (obj1.getPosition().x + size < obj2.getPosition().x || obj2.getPosition().x + size < obj1.getPosition().x)
@@ -143,7 +153,7 @@ public class MyGdxGame extends ApplicationAdapter {
 				.mapToObj(i -> {
 					int x = MathUtils.random(Gdx.graphics.getWidth());
 					int y = MathUtils.random(Gdx.graphics.getHeight());
-					return new newChar(x, y, "Red_enemy.png");
+					return new newChar(x, y, "RedC.png");
 				})
 				.collect(Collectors.toList());
 		enemies.addAll(newEnemies);
@@ -151,7 +161,7 @@ public class MyGdxGame extends ApplicationAdapter {
 				.mapToObj(i -> {
 					int x = MathUtils.random(Gdx.graphics.getWidth());
 					int y = MathUtils.random(Gdx.graphics.getHeight());
-					return new newChar(x, y, "Yellow_enemy.png");
+					return new newChar(x, y, "YellowC.png");
 				})
 				.collect(Collectors.toList());
 		enemies.addAll(newEnemies);
