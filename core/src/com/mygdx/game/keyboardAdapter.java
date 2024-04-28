@@ -11,7 +11,7 @@ public class keyboardAdapter extends InputAdapter {
     private boolean downPressed;
     private boolean spacePressed;
     private final Const constant = new Const();
-    private final float size = constant.size;
+    private final float size = constant.charSize;
     private final float halfSize = size/2;
     private final float maxWidth = constant.width - size;
     private final float minWidth = 0;
@@ -49,7 +49,7 @@ public class keyboardAdapter extends InputAdapter {
 
         return direction;
     }
-    public boolean goFromTitle(){
+    public boolean space(){
         return spacePressed;
     }
 }
