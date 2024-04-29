@@ -6,10 +6,9 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 public class DesktopLauncher {
 	public static void main (String[] arg) {
 		Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
-		Const constant = new Const();
 		config.setResizable(false);
-		config.setWindowedMode(constant.width,constant.height);
-		config.setForegroundFPS(constant.FPS);
+		config.setWindowedMode(Const.width,Const.height);
+		config.setForegroundFPS(Const.FPS);
 		config.setTitle("My GDX Game");
 		new Lwjgl3Application(new MyGdxGame(), config);
 	}
