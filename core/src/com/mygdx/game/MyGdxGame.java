@@ -17,9 +17,9 @@ import java.util.stream.IntStream;
 public class MyGdxGame extends ApplicationAdapter {
 	private OrthographicCamera camera;
 	private World world;
-	private Body player, rightBoarder, leftBoarder,upBoarder,downBoarder, bullet;
-	private final ArrayList<Body> enemies = new ArrayList<>();
-	private final ArrayList<BulletAndPoint> bullets = new ArrayList<>();
+	private Player player;
+	private final ArrayList<Enemy> enemies = new ArrayList<>();
+	private final ArrayList<Bullet> bullets = new ArrayList<>();
 	private ArrayList<Body> deleteList = new ArrayList<>();
 	private Box2DDebugRenderer b2dr;
 	private final float PPM = Const.PPM;
@@ -28,24 +28,22 @@ public class MyGdxGame extends ApplicationAdapter {
 	public void create () {
 		int w = Gdx.graphics.getWidth();
 		int h = Gdx.graphics.getHeight();
-		camera = new OrthographicCamera();
-		camera.setToOrtho(false, w/2, h/2);
 
+		camera = new OrthographicCamera();
+		resize(w/2, h/2);
 		world = new World(new Vector2(0,0), false);
 		world.setContactListener(new CollisionProcessing());
 		b2dr = new Box2DDebugRenderer();
 
-
-		player = createBox(300,300,32, 32, false, (short) 1, (short) 2,1);
+		player = new Player(world, w/4,h/4);
 		createBoarders(w,h);
-		createNewEnemies(5);
+		createNewEnemies(0);
 	}
 	@Override
 	public void render () {
 		update();
 		Gdx.gl.glClearColor(0,0,0,1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
 		b2dr.render(world, camera.combined.scl(PPM));
 	}
 	@Override
@@ -64,7 +62,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		inputUpdate();
 		cameraUpdate();
 		enemies.forEach(enemy -> enemyUpdate(enemy));
-		bullets.forEach(bullet -> bulletUpdate(bullet.getPoint().x, bullet.getPoint().y));
+		bullets.forEach(bullet -> bulletUpdate(bullet));
 
 	}
 	public void inputUpdate() {
@@ -84,31 +82,30 @@ public class MyGdxGame extends ApplicationAdapter {
 			verticalForce -= 1;
 		}
 		if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-			BulletAndPoint bulletAndPoint = new BulletAndPoint();
-			addNewBullet(bulletAndPoint);
+			addNewBullet();
 		}
 		if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
 			if (deleteCount < enemies.size()) {
-				world.destroyBody(enemies.get(deleteCount));
+				world.destroyBody(enemies.get(deleteCount).body);
 				deleteCount += 1;
 			}
 		}
-		player.setLinearVelocity(horizontalForce * 5, verticalForce * 5);
+		player.body.setLinearVelocity(horizontalForce * 5, verticalForce * 5);
 	}
 	public void cameraUpdate() {
 		camera.update();
 	}
-	public void enemyUpdate(Body enemy) {
-		float Dx = (player.getPosition().x * PPM - enemy.getPosition().x * PPM);
-		float Dy = (player.getPosition().y * PPM - enemy.getPosition().y * PPM);
+	public void enemyUpdate(Enemy enemy) {
+		float Dx = (player.body.getPosition().x * PPM - enemy.body.getPosition().x * PPM);
+		float Dy = (player.body.getPosition().y * PPM - enemy.body.getPosition().y * PPM);
 		float vector = (float) Math.sqrt(Dx*Dx + Dy*Dy);
-		enemy.setLinearVelocity(Dx/vector, Dy/vector);
+		enemy.body.setLinearVelocity(Dx/vector, Dy/vector);
 	}
-	public void bulletUpdate(float x, float y) {
-		float Dx = (x - bullet.getPosition().x * PPM);
-		float Dy = (y - bullet.getPosition().y * PPM);
+	public void bulletUpdate(Bullet bullet) {
+		float Dx = (bullet.getPoint().x - bullet.body.getPosition().x * PPM);
+		float Dy = (bullet.getPoint().y - bullet.body.getPosition().y * PPM);
 		float vector = (float) Math.sqrt(Dx*Dx + Dy*Dy);
-		bullet.setLinearVelocity(Dx/vector * 10, Dy/vector * 10);
+		bullet.body.setLinearVelocity(Dx/vector * 10, Dy/vector * 10);
 	}
 	public void deleteListUpdate() {
 		deleteList = CollisionProcessing.getDeleteList();
@@ -118,23 +115,26 @@ public class MyGdxGame extends ApplicationAdapter {
 		});
 		CollisionProcessing.clearDeleteList();
 	}
-	public void addNewBullet(BulletAndPoint bulletAndPoint) {
-		bullet = bulletAndPoint.createBullet(world, player.getPosition().x * PPM, player.getPosition().y * PPM);
-		bulletAndPoint.setBullet(bullet, Gdx.input.getX()/2, (Gdx.graphics.getHeight() - Gdx.input.getY())/2);
-		bullets.add(bulletAndPoint);
+	public void addNewBullet() {
+		float X0 = player.body.getPosition().x * PPM;
+		float Y0 = player.body.getPosition().y * PPM;
+		float X1 = Gdx.input.getX()/2;
+		float Y1 = (Gdx.graphics.getHeight() - Gdx.input.getY())/2;
+		Bullet bullet = new Bullet(world, X0, Y0, X1, Y1);
+		bullets.add(bullet);
 	}
 	public void createBoarders(int w, int h) {
-		rightBoarder = createBox(0,0,1,h, true, (short) 2, (short) (2 | 1 | 4),2);
-		leftBoarder = createBox(w/2,0,1,h, true, (short) 2, (short) (2 | 1 | 4),2);
-		upBoarder = createBox(0,h/2,w,1, true, (short) 2, (short) (2 | 1 | 4),2);
-		downBoarder = createBox(0,0,w,1, true, (short) 2, (short) (2 | 1 | 4),2);
+		Body rightBoarder = createBox(0,0,1,h, true, (short) 2, (short) (2 | 1 | 4),2);
+		Body leftBoarder = createBox(w/2,0,1,h, true, (short) 2, (short) (2 | 1 | 4),2);
+		Body upBoarder = createBox(0,h/2,w,1, true, (short) 2, (short) (2 | 1 | 4),2);
+		Body downBoarder = createBox(0,0,w,1, true, (short) 2, (short) (2 | 1 | 4),2);
 	}
 	public void createNewEnemies(int count) {
-		List<Body> newEnemies = IntStream.range(0, count)
+		List<Enemy> newEnemies = IntStream.range(0, count)
 				.mapToObj(i -> {
 					int x = MathUtils.random(Gdx.graphics.getWidth()/2);
 					int y = MathUtils.random(Gdx.graphics.getHeight()/2);
-					Body enemy = createBox(x, y, 32,32,false, (short) 2, (short) (2 | 1 | 4),1);
+					Enemy enemy = new Enemy(world, x, y);
 					return enemy;
 				})
 				.collect(Collectors.toList());
