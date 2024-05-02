@@ -26,32 +26,19 @@ public class MyGdxGame extends ApplicationAdapter {
 	private int deleteCount = 0;
 	@Override
 	public void create () {
-		float w = Gdx.graphics.getWidth();
-		float h = Gdx.graphics.getHeight();
-
+		int w = Gdx.graphics.getWidth();
+		int h = Gdx.graphics.getHeight();
 		camera = new OrthographicCamera();
 		camera.setToOrtho(false, w/2, h/2);
 
 		world = new World(new Vector2(0,0), false);
-		world.setContactListener(new CollisionProcessing(world));
+		world.setContactListener(new CollisionProcessing());
 		b2dr = new Box2DDebugRenderer();
 
 
 		player = createBox(300,300,32, 32, false, (short) 1, (short) 2,1);
-		rightBoarder = createBox(0,0,1,900, true, (short) 2, (short) (2 | 1 | 4),2);
-		leftBoarder = createBox(800,0,1,900, true, (short) 2, (short) (2 | 1 | 4),2);
-		upBoarder = createBox(0,450,1600,1, true, (short) 2, (short) (2 | 1 | 4),2);
-		downBoarder = createBox(0,0,1600,1, true, (short) 2, (short) (2 | 1 | 4),2);
-
-		List<Body> newEnemies = IntStream.range(0, 3)
-				.mapToObj(i -> {
-					int x = MathUtils.random(Gdx.graphics.getWidth()/2);
-					int y = MathUtils.random(Gdx.graphics.getHeight()/2);
-					Body enemy = createBox(x, y, 32,32,false, (short) 2, (short) (2 | 1 | 4),1);
-					return enemy;
-				})
-				.collect(Collectors.toList());
-		enemies.addAll(newEnemies);
+		createBoarders(w,h);
+		createNewEnemies(5);
 	}
 	@Override
 	public void render () {
@@ -71,12 +58,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		b2dr.dispose();
 	}
 	public void update() {
-		deleteList = CollisionProcessing.getDeleteList();
-		deleteList.forEach(obj -> {
-			obj.setActive(false);
-			world.destroyBody(obj);
-		});
-		CollisionProcessing.clearDeleteList();
+		deleteListUpdate();
 		world.step(1/60f, 6, 2);
 
 		inputUpdate();
@@ -103,16 +85,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		}
 		if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
 			BulletAndPoint bulletAndPoint = new BulletAndPoint();
-			bullet = createBox((int) (player.getPosition().x * PPM),
-					(int) (player.getPosition().y * PPM),
-					16,
-					16,
-					false,
-					(short) 4,
-					(short) 2,
-					3);
-			bulletAndPoint.setBullet(bullet, Gdx.input.getX()/2, (Gdx.graphics.getHeight() - Gdx.input.getY())/2);
-			bullets.add(bulletAndPoint);
+			addNewBullet(bulletAndPoint);
 		}
 		if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
 			if (deleteCount < enemies.size()) {
@@ -137,8 +110,37 @@ public class MyGdxGame extends ApplicationAdapter {
 		float vector = (float) Math.sqrt(Dx*Dx + Dy*Dy);
 		bullet.setLinearVelocity(Dx/vector * 10, Dy/vector * 10);
 	}
-
-	public Body createBox(int x, int y, int width, int height, boolean isStatic, short cBits,short mBits, int ID) {
+	public void deleteListUpdate() {
+		deleteList = CollisionProcessing.getDeleteList();
+		deleteList.forEach(obj -> {
+			obj.setActive(false);
+			world.destroyBody(obj);
+		});
+		CollisionProcessing.clearDeleteList();
+	}
+	public void addNewBullet(BulletAndPoint bulletAndPoint) {
+		bullet = bulletAndPoint.createBullet(world, player.getPosition().x * PPM, player.getPosition().y * PPM);
+		bulletAndPoint.setBullet(bullet, Gdx.input.getX()/2, (Gdx.graphics.getHeight() - Gdx.input.getY())/2);
+		bullets.add(bulletAndPoint);
+	}
+	public void createBoarders(int w, int h) {
+		rightBoarder = createBox(0,0,1,h, true, (short) 2, (short) (2 | 1 | 4),2);
+		leftBoarder = createBox(w/2,0,1,h, true, (short) 2, (short) (2 | 1 | 4),2);
+		upBoarder = createBox(0,h/2,w,1, true, (short) 2, (short) (2 | 1 | 4),2);
+		downBoarder = createBox(0,0,w,1, true, (short) 2, (short) (2 | 1 | 4),2);
+	}
+	public void createNewEnemies(int count) {
+		List<Body> newEnemies = IntStream.range(0, count)
+				.mapToObj(i -> {
+					int x = MathUtils.random(Gdx.graphics.getWidth()/2);
+					int y = MathUtils.random(Gdx.graphics.getHeight()/2);
+					Body enemy = createBox(x, y, 32,32,false, (short) 2, (short) (2 | 1 | 4),1);
+					return enemy;
+				})
+				.collect(Collectors.toList());
+		enemies.addAll(newEnemies);
+	}
+	public Body createBox(float x, float y, int width, int height, boolean isStatic, short cBits,short mBits, int ID) {
 		Body pBody;
 		BodyDef def = new BodyDef();
 
@@ -150,7 +152,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		pBody = world.createBody(def);
 
 		PolygonShape shape = new PolygonShape();
-		shape.setAsBox(width/2 / PPM, height/2 / PPM);
+		shape.setAsBox(width/2/PPM, height/2/PPM);
 
 		FixtureDef fixtureDef = new FixtureDef();
 		fixtureDef.shape = shape;
