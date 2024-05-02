@@ -7,9 +7,6 @@ public class Bullet {
     private final Vector2 point = new Vector2();
     public Body body;
     private final float PPM = Const.PPM;
-    private final short cBits = 4;
-    private final short mBits = 2;
-    private final int ID = 3;
     private final int size = 16;
     public Bullet(World world, float X0, float Y0, float X1, float Y1) {
         createBody(world, X0, Y0);
@@ -36,10 +33,10 @@ public class Bullet {
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = shape;
         fixtureDef.density = 1.0f;
-        fixtureDef.filter.categoryBits = cBits;
-        fixtureDef.filter.maskBits = mBits;
+        fixtureDef.filter.categoryBits = 4;
+        fixtureDef.filter.maskBits = 2;
 
         this.body = world.createBody(def);
-        this.body.createFixture(fixtureDef).setUserData(ID);
+        this.body.createFixture(fixtureDef).setUserData(3);
     }
 }

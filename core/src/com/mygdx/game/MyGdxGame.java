@@ -21,9 +21,11 @@ public class MyGdxGame extends ApplicationAdapter {
 	private final ArrayList<Enemy> enemies = new ArrayList<>();
 	private final ArrayList<Bullet> bullets = new ArrayList<>();
 	private ArrayList<Body> deleteList = new ArrayList<>();
+	private ArrayList<Body> damageList = new ArrayList<>();
 	private Box2DDebugRenderer b2dr;
 	private final float PPM = Const.PPM;
 	private int deleteCount = 0;
+	private int enemyCount = 10;
 	@Override
 	public void create () {
 		int w = Gdx.graphics.getWidth();
@@ -37,7 +39,7 @@ public class MyGdxGame extends ApplicationAdapter {
 
 		player = new Player(world, w/4,h/4);
 		createBoarders(w,h);
-		createNewEnemies(0);
+		createNewEnemies(enemyCount);
 	}
 	@Override
 	public void render () {
@@ -96,10 +98,20 @@ public class MyGdxGame extends ApplicationAdapter {
 		camera.update();
 	}
 	public void enemyUpdate(Enemy enemy) {
-		float Dx = (player.body.getPosition().x * PPM - enemy.body.getPosition().x * PPM);
-		float Dy = (player.body.getPosition().y * PPM - enemy.body.getPosition().y * PPM);
-		float vector = (float) Math.sqrt(Dx*Dx + Dy*Dy);
-		enemy.body.setLinearVelocity(Dx/vector, Dy/vector);
+		if (enemy.health > 0) {
+			float Dx = (player.body.getPosition().x * PPM - enemy.body.getPosition().x * PPM);
+			float Dy = (player.body.getPosition().y * PPM - enemy.body.getPosition().y * PPM);
+			float vector = (float) Math.sqrt(Dx * Dx + Dy * Dy);
+			enemy.body.setLinearVelocity(Dx / vector, Dy / vector);
+		}
+		else {
+			if (!enemy.destroyed) {
+				enemy.body.setActive(false);
+				world.destroyBody(enemy.body);
+				enemy.setDestroyed();
+			}
+		}
+		damageListUpdate();
 	}
 	public void bulletUpdate(Bullet bullet) {
 		float Dx = (bullet.getPoint().x - bullet.body.getPosition().x * PPM);
@@ -108,12 +120,22 @@ public class MyGdxGame extends ApplicationAdapter {
 		bullet.body.setLinearVelocity(Dx/vector * 10, Dy/vector * 10);
 	}
 	public void deleteListUpdate() {
-		deleteList = CollisionProcessing.getDeleteList();
+		deleteList = CollisionProcessing.deleteList;
 		deleteList.forEach(obj -> {
 			obj.setActive(false);
 			world.destroyBody(obj);
 		});
 		CollisionProcessing.clearDeleteList();
+	}
+	public void damageListUpdate() {
+		damageList = CollisionProcessing.damageList;
+		damageList.forEach(obj -> enemies.forEach(enemy -> {
+			if (enemy.body == obj) {
+				//System.out.println("Same body");
+				enemy.getDamage(25);
+			}
+		}));
+		CollisionProcessing.clearDamageList();
 	}
 	public void addNewBullet() {
 		float X0 = player.body.getPosition().x * PPM;
@@ -124,10 +146,10 @@ public class MyGdxGame extends ApplicationAdapter {
 		bullets.add(bullet);
 	}
 	public void createBoarders(int w, int h) {
-		Body rightBoarder = createBox(0,0,1,h, true, (short) 2, (short) (2 | 1 | 4),2);
-		Body leftBoarder = createBox(w/2,0,1,h, true, (short) 2, (short) (2 | 1 | 4),2);
-		Body upBoarder = createBox(0,h/2,w,1, true, (short) 2, (short) (2 | 1 | 4),2);
-		Body downBoarder = createBox(0,0,w,1, true, (short) 2, (short) (2 | 1 | 4),2);
+		Body rightBoarder = createBox(0,0,1,h, true, (short) 2, (short) (2 | 1 | 4),4);
+		Body leftBoarder = createBox(w/2,0,1,h, true, (short) 2, (short) (2 | 1 | 4),4);
+		Body upBoarder = createBox(0,h/2,w,1, true, (short) 2, (short) (2 | 1 | 4),4);
+		Body downBoarder = createBox(0,0,w,1, true, (short) 2, (short) (2 | 1 | 4),4);
 	}
 	public void createNewEnemies(int count) {
 		List<Enemy> newEnemies = IntStream.range(0, count)
@@ -164,5 +186,4 @@ public class MyGdxGame extends ApplicationAdapter {
 		shape.dispose();
 		return pBody;
 	}
-
 }

@@ -5,16 +5,17 @@ import com.badlogic.gdx.physics.box2d.*;
 public class Enemy {
     public Body body;
     public int health = 100;
+    public boolean destroyed = false;
     private final float PPM = Const.PPM;
-    private final short cBits = 2;
-    private final short mBits = (2 | 1 | 4);
-    private final int ID = 1;
     private final int size = 32;
     public Enemy(World world, float x, float y) {
         createBody(world, x, y);
     }
     public void getDamage(int damage) {
         this.health -= damage;
+    }
+    public void setDestroyed() {
+        this.destroyed = true;
     }
     private void createBody(World world, float x, float y) {
         BodyDef def = new BodyDef();
@@ -29,10 +30,10 @@ public class Enemy {
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = shape;
         fixtureDef.density = 1.0f;
-        fixtureDef.filter.categoryBits = cBits;
-        fixtureDef.filter.maskBits = mBits;
+        fixtureDef.filter.categoryBits = 2;
+        fixtureDef.filter.maskBits = (2 | 1 | 4);
 
         this.body = world.createBody(def);
-        this.body.createFixture(fixtureDef).setUserData(ID);
+        this.body.createFixture(fixtureDef).setUserData(2);
     }
 }

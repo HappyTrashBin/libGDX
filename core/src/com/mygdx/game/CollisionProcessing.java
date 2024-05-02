@@ -6,25 +6,22 @@ import java.util.ArrayList;
 
 public class CollisionProcessing implements ContactListener {
     public static ArrayList<Body> deleteList = new ArrayList<>();
-
-
+    public static ArrayList<Body> damageList = new ArrayList<>();
     @Override
     public void beginContact(Contact contact) {
         Fixture A = contact.getFixtureA();
         Fixture B = contact.getFixtureB();
         if (A.getUserData().equals(3)) {
-            //System.out.println("Bullet Body collision");
             deleteList.add(A.getBody());
         }
         if (B.getUserData().equals(3)) {
-            //System.out.println("Body Bullet collision");
             deleteList.add(B.getBody());
         }
-        if (A.getUserData().equals(1)) {
-            //System.out.println("Enemy");
+        if (A.getUserData().equals(2) && B.getUserData().equals(3)) {
+            damageList.add(A.getBody());
         }
-        if (B.getUserData().equals(1)) {
-            //System.out.println("Enemy");
+        if (B.getUserData().equals(2) && A.getUserData().equals(3)) {
+            damageList.add(B.getBody());
         }
     }
 
@@ -40,10 +37,10 @@ public class CollisionProcessing implements ContactListener {
     public void postSolve(Contact contact, ContactImpulse contactImpulse) {
 
     }
-    public static ArrayList<Body> getDeleteList() {
-        return deleteList;
-    }
     public static void clearDeleteList() {
         deleteList.clear();
+    }
+    public static void clearDamageList() {
+        damageList.clear();
     }
 }
