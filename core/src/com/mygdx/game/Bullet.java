@@ -7,7 +7,7 @@ public class Bullet {
     private final Vector2 point = new Vector2();
     public Body body;
     private final float PPM = Const.PPM;
-    private final int size = 16;
+    private final int size = Const.bulletSize;
     public Bullet(World world, float X0, float Y0, float X1, float Y1) {
         createBody(world, X0, Y0);
 

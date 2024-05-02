@@ -4,10 +4,18 @@ import com.badlogic.gdx.physics.box2d.*;
 
 public class Player {
     public Body body;
+    public int health = 100;
+    public boolean gameOver = false;
     private final float PPM = Const.PPM;
-    private final int size = 32;
+    private final int size = Const.playerSize;
     public Player(World world, float x, float y) {
         createBody(world, x, y);
+    }
+    public void getDamage(int damage) {
+        this.health -= damage;
+    }
+    public void youLose() {
+        this.gameOver = true;
     }
     private void createBody(World world, float x, float y) {
         BodyDef def = new BodyDef();

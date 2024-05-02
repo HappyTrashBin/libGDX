@@ -7,6 +7,7 @@ import java.util.ArrayList;
 public class CollisionProcessing implements ContactListener {
     public static ArrayList<Body> deleteList = new ArrayList<>();
     public static ArrayList<Body> damageList = new ArrayList<>();
+    public static boolean playerDamage = false;
     @Override
     public void beginContact(Contact contact) {
         Fixture A = contact.getFixtureA();
@@ -22,6 +23,12 @@ public class CollisionProcessing implements ContactListener {
         }
         if (B.getUserData().equals(2) && A.getUserData().equals(3)) {
             damageList.add(B.getBody());
+        }
+        if (A.getUserData().equals(1) && B.getUserData().equals(2)) {
+            playerDamage = true;
+        }
+        if (B.getUserData().equals(1) && A.getUserData().equals(2)) {
+            playerDamage = true;
         }
     }
 
@@ -42,5 +49,8 @@ public class CollisionProcessing implements ContactListener {
     }
     public static void clearDamageList() {
         damageList.clear();
+    }
+    public static void playerGotDamage() {
+        playerDamage = false;
     }
 }

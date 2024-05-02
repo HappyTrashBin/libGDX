@@ -5,5 +5,8 @@ public final class Const {
     public final static int width = 1600;
     public final static int height = 900;
     public final static int FPS = 60;
+    public final static int playerSize = 32;
+    public final static int enemySize = 32;
+    public final static int bulletSize = 16;
 
 }

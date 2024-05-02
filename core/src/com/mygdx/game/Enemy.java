@@ -7,7 +7,7 @@ public class Enemy {
     public int health = 100;
     public boolean destroyed = false;
     private final float PPM = Const.PPM;
-    private final int size = 32;
+    private final int size = Const.enemySize;
     public Enemy(World world, float x, float y) {
         createBody(world, x, y);
     }

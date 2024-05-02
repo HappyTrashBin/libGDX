@@ -24,8 +24,8 @@ public class MyGdxGame extends ApplicationAdapter {
 	private ArrayList<Body> damageList = new ArrayList<>();
 	private Box2DDebugRenderer b2dr;
 	private final float PPM = Const.PPM;
-	private int deleteCount = 0;
-	private int enemyCount = 10;
+	private int enemyCount = 1;
+	private boolean gameOver = false;
 	@Override
 	public void create () {
 		int w = Gdx.graphics.getWidth();
@@ -43,7 +43,7 @@ public class MyGdxGame extends ApplicationAdapter {
 	}
 	@Override
 	public void render () {
-		update();
+		update(player.gameOver);
 		Gdx.gl.glClearColor(0,0,0,1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		b2dr.render(world, camera.combined.scl(PPM));
@@ -57,14 +57,22 @@ public class MyGdxGame extends ApplicationAdapter {
 		world.dispose();
 		b2dr.dispose();
 	}
-	public void update() {
-		deleteListUpdate();
+	public void update(boolean gameOver) {
 		world.step(1/60f, 6, 2);
-
-		inputUpdate();
 		cameraUpdate();
-		enemies.forEach(enemy -> enemyUpdate(enemy));
-		bullets.forEach(bullet -> bulletUpdate(bullet));
+
+		if (!gameOver) {
+			deleteListUpdate();
+			inputUpdate();
+			enemies.forEach(enemy -> enemyUpdate(enemy));
+			bullets.forEach(bullet -> bulletUpdate(bullet));
+			playerHealthUpdate();
+		}
+		else {
+			enemies.forEach(enemy -> enemy.body.setLinearVelocity(0,0));
+			bullets.forEach(bullet -> bullet.body.setLinearVelocity(0,0));
+			player.body.setLinearVelocity(0,0);
+		}
 
 	}
 	public void inputUpdate() {
@@ -85,12 +93,6 @@ public class MyGdxGame extends ApplicationAdapter {
 		}
 		if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
 			addNewBullet();
-		}
-		if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
-			if (deleteCount < enemies.size()) {
-				world.destroyBody(enemies.get(deleteCount).body);
-				deleteCount += 1;
-			}
 		}
 		player.body.setLinearVelocity(horizontalForce * 5, verticalForce * 5);
 	}
@@ -137,7 +139,20 @@ public class MyGdxGame extends ApplicationAdapter {
 		}));
 		CollisionProcessing.clearDamageList();
 	}
-	public void addNewBullet() {
+	public void playerHealthUpdate() {
+		if (player.health <= 0) {
+			player.youLose();
+		}
+		playerDamageUpdate();
+	}
+	public void playerDamageUpdate() {
+		boolean damage = CollisionProcessing.playerDamage;
+		if (damage) {
+			player.getDamage(20);
+			CollisionProcessing.playerGotDamage();
+		}
+	}
+ 	public void addNewBullet() {
 		float X0 = player.body.getPosition().x * PPM;
 		float Y0 = player.body.getPosition().y * PPM;
 		float X1 = Gdx.input.getX()/2;
