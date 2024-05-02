@@ -2,8 +2,11 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.physics.box2d.*;
 
+import java.util.ArrayList;
+
 public class CollisionProcessing implements ContactListener {
-    World world;
+    public World world;
+    public static ArrayList<Body> deleteList = new ArrayList<>();
 
     public CollisionProcessing(World world) {
         super();
@@ -30,13 +33,17 @@ public class CollisionProcessing implements ContactListener {
 
         if (A.getUserData().equals(3)) {
             System.out.println("Bullet Body collision");
-            //A.getBody().setActive(false);
-            //world.destroyBody(A.getBody());
+            deleteList.add(A.getBody());
         }
         if (B.getUserData().equals(3)) {
             System.out.println("Body Bullet collision");
-            //B.getBody().setActive(false);
-            //world.destroyBody(B.getBody()); // I tried -B.geB.getBody().destroyFixture(B);- but it does not work too
+            deleteList.add(B.getBody());
         }
+    }
+    public static ArrayList<Body> getDeleteList() {
+        return deleteList;
+    }
+    public static void clearDeleteList() {
+        deleteList.clear();
     }
 }

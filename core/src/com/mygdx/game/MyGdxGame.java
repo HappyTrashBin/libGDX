@@ -20,6 +20,7 @@ public class MyGdxGame extends ApplicationAdapter {
 	private Body player, rightBoarder, leftBoarder,upBoarder,downBoarder, bullet;
 	private final ArrayList<Body> enemies = new ArrayList<>();
 	private final ArrayList<BulletAndPoint> bullets = new ArrayList<>();
+	private ArrayList<Body> deleteList = new ArrayList<>();
 	private Box2DDebugRenderer b2dr;
 	private final float PPM = Const.PPM;
 	private int deleteCount = 0;
@@ -70,12 +71,19 @@ public class MyGdxGame extends ApplicationAdapter {
 		b2dr.dispose();
 	}
 	public void update() {
+		deleteList = CollisionProcessing.getDeleteList();
+		deleteList.forEach(obj -> {
+			obj.setActive(false);
+			world.destroyBody(obj);
+		});
+		CollisionProcessing.clearDeleteList();
 		world.step(1/60f, 6, 2);
 
 		inputUpdate();
 		cameraUpdate();
 		enemies.forEach(enemy -> enemyUpdate(enemy));
 		bullets.forEach(bullet -> bulletUpdate(bullet.getPoint().x, bullet.getPoint().y));
+
 	}
 	public void inputUpdate() {
 		int horizontalForce = 0;
