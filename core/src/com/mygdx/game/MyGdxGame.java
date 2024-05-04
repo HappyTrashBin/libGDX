@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.utils.TimeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +25,8 @@ public class MyGdxGame extends ApplicationAdapter {
 	private ArrayList<Body> damageList = new ArrayList<>();
 	private Box2DDebugRenderer b2dr;
 	private final float PPM = Const.PPM;
-	private int enemyCount = 1;
-	private boolean gameOver = false;
+	private final int enemyCount = 20;
+	private long time = 0;
 	@Override
 	public void create () {
 		int w = Gdx.graphics.getWidth();
@@ -59,7 +60,7 @@ public class MyGdxGame extends ApplicationAdapter {
 	}
 	public void update(boolean gameOver) {
 		world.step(1/60f, 6, 2);
-		cameraUpdate();
+		camera.update();
 
 		if (!gameOver) {
 			deleteListUpdate();
@@ -73,7 +74,6 @@ public class MyGdxGame extends ApplicationAdapter {
 			bullets.forEach(bullet -> bullet.body.setLinearVelocity(0,0));
 			player.body.setLinearVelocity(0,0);
 		}
-
 	}
 	public void inputUpdate() {
 		int horizontalForce = 0;
@@ -91,20 +91,17 @@ public class MyGdxGame extends ApplicationAdapter {
 		if (Gdx.input.isKeyPressed(Input.Keys.S)) {
 			verticalForce -= 1;
 		}
-		if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+		if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
 			addNewBullet();
 		}
-		player.body.setLinearVelocity(horizontalForce * 5, verticalForce * 5);
-	}
-	public void cameraUpdate() {
-		camera.update();
+		player.body.setLinearVelocity(horizontalForce * Const.playerSpeed, verticalForce * Const.playerSpeed);
 	}
 	public void enemyUpdate(Enemy enemy) {
 		if (enemy.health > 0) {
 			float Dx = (player.body.getPosition().x * PPM - enemy.body.getPosition().x * PPM);
 			float Dy = (player.body.getPosition().y * PPM - enemy.body.getPosition().y * PPM);
 			float vector = (float) Math.sqrt(Dx * Dx + Dy * Dy);
-			enemy.body.setLinearVelocity(Dx / vector, Dy / vector);
+			enemy.body.setLinearVelocity(Dx / vector * Const.enemiesSpeed, Dy / vector * Const.enemiesSpeed);
 		}
 		else {
 			if (!enemy.destroyed) {
@@ -132,10 +129,7 @@ public class MyGdxGame extends ApplicationAdapter {
 	public void damageListUpdate() {
 		damageList = CollisionProcessing.damageList;
 		damageList.forEach(obj -> enemies.forEach(enemy -> {
-			if (enemy.body == obj) {
-				//System.out.println("Same body");
-				enemy.getDamage(25);
-			}
+			if (enemy.body == obj) enemy.getDamage(Const.playerDamage);
 		}));
 		CollisionProcessing.clearDamageList();
 	}
@@ -143,62 +137,64 @@ public class MyGdxGame extends ApplicationAdapter {
 		if (player.health <= 0) {
 			player.youLose();
 		}
-		playerDamageUpdate();
-	}
-	public void playerDamageUpdate() {
+
 		boolean damage = CollisionProcessing.playerDamage;
 		if (damage) {
-			player.getDamage(20);
+			player.getDamage(Const.enemiesDamage);
 			CollisionProcessing.playerGotDamage();
 		}
 	}
  	public void addNewBullet() {
-		float X0 = player.body.getPosition().x * PPM;
-		float Y0 = player.body.getPosition().y * PPM;
-		float X1 = Gdx.input.getX()/2;
-		float Y1 = (Gdx.graphics.getHeight() - Gdx.input.getY())/2;
-		Bullet bullet = new Bullet(world, X0, Y0, X1, Y1);
-		bullets.add(bullet);
+		if ((TimeUtils.timeSinceMillis(time) >= 750) || (time == 0)) {
+			float X0 = player.body.getPosition().x * PPM;
+			float Y0 = player.body.getPosition().y * PPM;
+			float X1 = Gdx.input.getX() / 2;
+			float Y1 = (Gdx.graphics.getHeight() - Gdx.input.getY()) / 2;
+			Bullet bullet = new Bullet(world, X0, Y0, X1, Y1);
+			bullets.add(bullet);
+			time = TimeUtils.millis();
+		}
 	}
 	public void createBoarders(int w, int h) {
-		Body rightBoarder = createBox(0,0,1,h, true, (short) 2, (short) (2 | 1 | 4),4);
-		Body leftBoarder = createBox(w/2,0,1,h, true, (short) 2, (short) (2 | 1 | 4),4);
-		Body upBoarder = createBox(0,h/2,w,1, true, (short) 2, (short) (2 | 1 | 4),4);
-		Body downBoarder = createBox(0,0,w,1, true, (short) 2, (short) (2 | 1 | 4),4);
+		Border rightBoarder = new Border(world,0,0,1,h);
+		Border leftBoarder = new Border(world,w/2,0,1,h);
+		Border upBoarder = new Border(world,0,h/2,w,1);
+		Border downBoarder = new Border(world,0,0,w,1);
 	}
 	public void createNewEnemies(int count) {
 		List<Enemy> newEnemies = IntStream.range(0, count)
 				.mapToObj(i -> {
-					int x = MathUtils.random(Gdx.graphics.getWidth()/2);
-					int y = MathUtils.random(Gdx.graphics.getHeight()/2);
+					int x = getSpawnPosition(true);
+					int y = getSpawnPosition(false);
 					Enemy enemy = new Enemy(world, x, y);
 					return enemy;
 				})
 				.collect(Collectors.toList());
 		enemies.addAll(newEnemies);
 	}
-	public Body createBox(float x, float y, int width, int height, boolean isStatic, short cBits,short mBits, int ID) {
-		Body pBody;
-		BodyDef def = new BodyDef();
+	public void addNewEnemy() {
+		int x = getSpawnPosition(true);
+		int y = getSpawnPosition(false);
+		Enemy enemy = new Enemy(world, x, y);
+		enemies.add(enemy);
+	}
+	public int getSpawnPosition(boolean isX) {
+		int pos;
+		float playerPos;
+		if (isX) {
+			pos = MathUtils.random(Gdx.graphics.getWidth()/2);
+			playerPos = player.body.getPosition().x * PPM;
+		}
+		else {
+			pos = MathUtils.random(Gdx.graphics.getHeight()/2);
+			playerPos = player.body.getPosition().y * PPM;
+		}
 
-		if (isStatic) def.type = BodyDef.BodyType.StaticBody;
-		else def.type = BodyDef.BodyType.DynamicBody;
-		def.position.set(x/PPM,y/PPM);
-		def.fixedRotation = true;
-
-		pBody = world.createBody(def);
-
-		PolygonShape shape = new PolygonShape();
-		shape.setAsBox(width/2/PPM, height/2/PPM);
-
-		FixtureDef fixtureDef = new FixtureDef();
-		fixtureDef.shape = shape;
-		fixtureDef.density = 1.0f;
-		fixtureDef.filter.categoryBits = cBits;
-		fixtureDef.filter.maskBits = mBits;
-
-		pBody.createFixture(fixtureDef).setUserData(ID);
-		shape.dispose();
-		return pBody;
+		if ((playerPos + Const.safeZone < pos) || (playerPos - Const.safeZone > pos)) {
+			return pos;
+		}
+		else {
+			return getSpawnPosition(isX);
+		}
 	}
 }
