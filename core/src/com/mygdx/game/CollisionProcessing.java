@@ -12,12 +12,7 @@ public class CollisionProcessing implements ContactListener {
     public void beginContact(Contact contact) {
         Fixture A = contact.getFixtureA();
         Fixture B = contact.getFixtureB();
-        if (A.getUserData().equals(3)) {
-            deleteList.add(A.getBody());
-        }
-        if (B.getUserData().equals(3)) {
-            deleteList.add(B.getBody());
-        }
+
         if (A.getUserData().equals(2) && B.getUserData().equals(3)) {
             damageList.add(A.getBody());
         }
@@ -42,7 +37,17 @@ public class CollisionProcessing implements ContactListener {
 
     @Override
     public void postSolve(Contact contact, ContactImpulse contactImpulse) {
+        Fixture A = contact.getFixtureA();
+        Fixture B = contact.getFixtureB();
 
+        if (A.getUserData().equals(3)) {
+            deleteList.add(A.getBody());
+            B.getBody().setLinearVelocity(0,0);
+        }
+        if (B.getUserData().equals(3)) {
+            deleteList.add(B.getBody());
+            A.getBody().setLinearVelocity(0,0);
+        }
     }
     public static void clearDeleteList() {
         deleteList.clear();

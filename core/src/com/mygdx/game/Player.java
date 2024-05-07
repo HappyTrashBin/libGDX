@@ -7,11 +7,12 @@ public class Player extends Entity{
     private final static short cBits = 1;
     private final static short mBits = 2;
     private final static int ID = 1;
+    private final static float density = 20.0f;
     public int health = 100;
     public boolean gameOver = false;
 
     public Player(World world, float x, float y) {
-        super(world, x, y, size, size, cBits, mBits, ID, false);
+        super(world, x, y, size, size, cBits, mBits, ID, false, density);
     }
     public void getDamage(int damage) {
         this.health -= damage;

@@ -9,12 +9,23 @@ public class Entity {
     private final short cBits;
     private final short mBits;
     private final int ID;
-    public Entity(World world, float x, float y, float width, float height, short cBits, short mBits, int ID, boolean isStatic) {
+    private final float density;
+    public Entity(World world,
+                  float x,
+                  float y,
+                  float width,
+                  float height,
+                  short cBits,
+                  short mBits,
+                  int ID,
+                  boolean isStatic,
+                  float density) {
         this.width = width;
         this.height = height;
         this.cBits = cBits;
         this.mBits = mBits;
         this.ID = ID;
+        this.density = density;
         createBody(world, x, y, isStatic);
     }
     private void createBody(World world, float x, float y, boolean isStatic) {
@@ -31,9 +42,10 @@ public class Entity {
 
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = shape;
-        fixtureDef.density = 1.0f;
+        fixtureDef.density = density;
         fixtureDef.filter.categoryBits = cBits;
         fixtureDef.filter.maskBits = mBits;
+
 
         this.body = world.createBody(def);
         this.body.createFixture(fixtureDef).setUserData(ID);

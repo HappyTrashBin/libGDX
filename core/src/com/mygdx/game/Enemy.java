@@ -7,10 +7,11 @@ public class Enemy extends Entity{
     private final static short cBits = 2;
     private final static short mBits = (2 | 1 | 4);
     private final static int ID = 2;
+    private final static float density = 10.0f;
     public int health = 100;
     public boolean destroyed = false;
     public Enemy(World world, float x, float y) {
-        super(world, x, y, size, size, cBits, mBits, ID, false);
+        super(world, x, y, size, size, cBits, mBits, ID, false, density);
     }
     public void getDamage(int damage) {
         this.health -= damage;

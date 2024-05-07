@@ -25,21 +25,21 @@ public class MyGdxGame extends ApplicationAdapter {
 	private ArrayList<Body> damageList = new ArrayList<>();
 	private Box2DDebugRenderer b2dr;
 	private final float PPM = Const.PPM;
-	private final int enemyCount = 20;
+	private final int enemyCount = 5;
 	private long time = 0;
 	@Override
 	public void create () {
-		int w = Gdx.graphics.getWidth();
-		int h = Gdx.graphics.getHeight();
+		int width = Gdx.graphics.getWidth();
+		int height = Gdx.graphics.getHeight();
 
 		camera = new OrthographicCamera();
-		resize(w/2, h/2);
+		resize(width/2, height/2);
 		world = new World(new Vector2(0,0), false);
 		world.setContactListener(new CollisionProcessing());
 		b2dr = new Box2DDebugRenderer();
 
-		player = new Player(world, w/4,h/4);
-		createBoarders(w,h);
+		player = new Player(world, width/4,height/4);
+		createBoarders(width,height);
 		createNewEnemies(enemyCount);
 	}
 	@Override
@@ -155,19 +155,18 @@ public class MyGdxGame extends ApplicationAdapter {
 			time = TimeUtils.millis();
 		}
 	}
-	public void createBoarders(int w, int h) {
-		Border rightBoarder = new Border(world,0,0,1,h);
-		Border leftBoarder = new Border(world,w/2,0,1,h);
-		Border upBoarder = new Border(world,0,h/2,w,1);
-		Border downBoarder = new Border(world,0,0,w,1);
+	public void createBoarders(int width, int height) {
+		Border rightBoarder = new Border(world,0,0,1,height);
+		Border leftBoarder = new Border(world,width/2,0,1,height);
+		Border upBoarder = new Border(world,0,height/2,width,1);
+		Border downBoarder = new Border(world,0,0,width,1);
 	}
 	public void createNewEnemies(int count) {
 		List<Enemy> newEnemies = IntStream.range(0, count)
 				.mapToObj(i -> {
 					int x = getSpawnPosition(true);
 					int y = getSpawnPosition(false);
-					Enemy enemy = new Enemy(world, x, y);
-					return enemy;
+					return new Enemy(world, x, y);
 				})
 				.collect(Collectors.toList());
 		enemies.addAll(newEnemies);
