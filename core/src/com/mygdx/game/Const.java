@@ -11,6 +11,7 @@ public final class Const {
     public static int safeZone = 64;
     public static int playerDamage = 25;
     public static int playerSpeed = 5;
+    public static int playerAttackSpeed = 250;
     public static int enemiesDamage = 20;
     public static int enemiesSpeed = 2;
 

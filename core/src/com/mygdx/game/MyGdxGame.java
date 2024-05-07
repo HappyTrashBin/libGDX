@@ -27,6 +27,7 @@ public class MyGdxGame extends ApplicationAdapter {
 	private final float PPM = Const.PPM;
 	private final int enemyCount = 5;
 	private long time = 0;
+	private Screen currentScreen = Screen.TITLE;
 	@Override
 	public void create () {
 		int width = Gdx.graphics.getWidth();
@@ -38,16 +39,35 @@ public class MyGdxGame extends ApplicationAdapter {
 		world.setContactListener(new CollisionProcessing());
 		b2dr = new Box2DDebugRenderer();
 
-		player = new Player(world, width/4,height/4);
+		createNewPlayer();
 		createBoarders(width,height);
 		createNewEnemies(enemyCount);
+
 	}
 	@Override
 	public void render () {
-		update(player.gameOver);
-		Gdx.gl.glClearColor(0,0,0,1);
-		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		b2dr.render(world, camera.combined.scl(PPM));
+		if (currentScreen == Screen.TITLE) {
+			Gdx.gl.glClearColor(0, 1, 0, 1);
+			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+			if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+				currentScreen = Screen.MAIN_GAME;
+			}
+		}
+		else if (currentScreen == Screen.MAIN_GAME) {
+			update(player.gameOver);
+			Gdx.gl.glClearColor(0, 0, 0, 1);
+			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+			b2dr.render(world, camera.combined.scl(PPM));
+		}
+		else if (currentScreen == Screen.GAME_OVER) {
+			Gdx.gl.glClearColor(1, 0, 0, 1);
+			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+			if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+				currentScreen = Screen.MAIN_GAME;
+				createNewPlayer();
+				createNewEnemies(enemyCount);
+			}
+		}
 	}
 	@Override
 	public void resize(int width, int height) {
@@ -73,6 +93,7 @@ public class MyGdxGame extends ApplicationAdapter {
 			enemies.forEach(enemy -> enemy.body.setLinearVelocity(0,0));
 			bullets.forEach(bullet -> bullet.body.setLinearVelocity(0,0));
 			player.body.setLinearVelocity(0,0);
+			currentScreen = Screen.GAME_OVER;
 		}
 	}
 	public void inputUpdate() {
@@ -145,7 +166,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		}
 	}
  	public void addNewBullet() {
-		if ((TimeUtils.timeSinceMillis(time) >= 750) || (time == 0)) {
+		if ((TimeUtils.timeSinceMillis(time) >= Const.playerAttackSpeed) || (time == 0)) {
 			float X0 = player.body.getPosition().x * PPM;
 			float Y0 = player.body.getPosition().y * PPM;
 			float X1 = Gdx.input.getX() / 2;
@@ -155,6 +176,13 @@ public class MyGdxGame extends ApplicationAdapter {
 			time = TimeUtils.millis();
 		}
 	}
+	public void createNewPlayer() {
+		int width = Gdx.graphics.getWidth();
+		int height = Gdx.graphics.getHeight();
+
+		if (player != null) {world.destroyBody(player.body);}
+		player = new Player(world, width/4,height/4);
+	}
 	public void createBoarders(int width, int height) {
 		Border rightBoarder = new Border(world,0,0,1,height);
 		Border leftBoarder = new Border(world,width/2,0,1,height);
@@ -162,6 +190,8 @@ public class MyGdxGame extends ApplicationAdapter {
 		Border downBoarder = new Border(world,0,0,width,1);
 	}
 	public void createNewEnemies(int count) {
+		enemies.forEach(enemy -> world.destroyBody(enemy.body));
+		enemies.clear();
 		List<Enemy> newEnemies = IntStream.range(0, count)
 				.mapToObj(i -> {
 					int x = getSpawnPosition(true);
