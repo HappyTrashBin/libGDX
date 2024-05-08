@@ -20,4 +20,8 @@ public class Player extends Entity{
     public void youLose() {
         this.gameOver = true;
     }
+    public void moreHealth() {
+        this.health = 100;
+        this.health += 50;
+    }
 }

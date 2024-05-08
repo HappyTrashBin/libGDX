@@ -9,9 +9,11 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.TimeUtils;
+import com.badlogic.gdx.utils.Timer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimerTask;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -26,8 +28,8 @@ public class MyGdxGame extends ApplicationAdapter {
 	private Box2DDebugRenderer b2dr;
 	private final float PPM = Const.PPM;
 	private final int enemyCount = 5;
-	private long time = 0;
 	private Screen currentScreen = Screen.TITLE;
+	private boolean canShoot = true;
 	@Override
 	public void create () {
 		int width = Gdx.graphics.getWidth();
@@ -166,14 +168,21 @@ public class MyGdxGame extends ApplicationAdapter {
 		}
 	}
  	public void addNewBullet() {
-		if ((TimeUtils.timeSinceMillis(time) >= Const.playerAttackSpeed) || (time == 0)) {
+		if (canShoot) {
+			canShoot = false;
 			float X0 = player.body.getPosition().x * PPM;
 			float Y0 = player.body.getPosition().y * PPM;
 			float X1 = Gdx.input.getX() / 2;
 			float Y1 = (Gdx.graphics.getHeight() - Gdx.input.getY()) / 2;
 			Bullet bullet = new Bullet(world, X0, Y0, X1, Y1);
 			bullets.add(bullet);
-			time = TimeUtils.millis();
+			Timer timer = new Timer();
+			timer.scheduleTask(new Timer.Task() {
+				@Override
+				public void run() {
+					canShoot = true;
+				}
+			}, Const.playerAttackSpeed/1000f);
 		}
 	}
 	public void createNewPlayer() {
