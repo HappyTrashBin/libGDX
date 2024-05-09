@@ -12,7 +12,7 @@ public class Player extends Entity{
     public boolean gameOver = false;
 
     public Player(World world, float x, float y) {
-        super(world, x, y, size, size, cBits, mBits, ID, false, density);
+        super(world, x, y, size, size, cBits, mBits, ID, false, true, density);
     }
     public void getDamage(int damage) {
         this.health -= damage;

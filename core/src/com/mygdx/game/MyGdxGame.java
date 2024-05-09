@@ -5,15 +5,16 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
-import com.badlogic.gdx.utils.TimeUtils;
 import com.badlogic.gdx.utils.Timer;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimerTask;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -30,6 +31,11 @@ public class MyGdxGame extends ApplicationAdapter {
 	private final int enemyCount = 5;
 	private Screen currentScreen = Screen.TITLE;
 	private boolean canShoot = true;
+	private boolean newEnemy = true;
+	private SpriteBatch batch;
+	private TextureRegion backgroundTextureTitle;
+	private TextureRegion backgroundTextureMain;
+	private TextureRegion backgroundTextureOver;
 	@Override
 	public void create () {
 		int width = Gdx.graphics.getWidth();
@@ -45,30 +51,51 @@ public class MyGdxGame extends ApplicationAdapter {
 		createBoarders(width,height);
 		createNewEnemies(enemyCount);
 
+		batch = new SpriteBatch();
+		backgroundTextureTitle = new TextureRegion(new Texture("title.png"), 1600, 900);
+		backgroundTextureMain = new TextureRegion(new Texture("field.png"), 1600, 900);
+		backgroundTextureOver = new TextureRegion(new Texture("game_over.png"), 1600, 900);
+
 	}
 	@Override
 	public void render () {
 		if (currentScreen == Screen.TITLE) {
-			Gdx.gl.glClearColor(0, 1, 0, 1);
-			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+			batch.begin();
+			batch.draw(backgroundTextureTitle, 0, 0);
 			if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
 				currentScreen = Screen.MAIN_GAME;
 			}
+			batch.end();
 		}
 		else if (currentScreen == Screen.MAIN_GAME) {
-			update(player.gameOver);
-			Gdx.gl.glClearColor(0, 0, 0, 1);
+			batch.begin();
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+			batch.draw(backgroundTextureMain, 0, 0);
+			batch.draw(new Texture("YellowC.png"), player.body.getPosition().x * PPM - 16, player.body.getPosition().y * PPM - 16, 32, 32);
+			enemies.forEach(enemy -> {
+				if (!enemy.destroyed) {
+					batch.draw(new Texture("RedC.png"),
+							enemy.body.getPosition().x * PPM - 16,
+							enemy.body.getPosition().y * PPM - 16,
+							32,
+							32);
+				}
+			});
+			update(player.gameOver);
 			b2dr.render(world, camera.combined.scl(PPM));
+			batch.end();
 		}
 		else if (currentScreen == Screen.GAME_OVER) {
-			Gdx.gl.glClearColor(1, 0, 0, 1);
+			batch.begin();
+			batch.draw(backgroundTextureOver, 0, 0);
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 			if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
 				currentScreen = Screen.MAIN_GAME;
+				clearBullets();
 				createNewPlayer();
 				createNewEnemies(enemyCount);
 			}
+			batch.end();
 		}
 	}
 	@Override
@@ -77,18 +104,22 @@ public class MyGdxGame extends ApplicationAdapter {
 	}
 	@Override
 	public void dispose () {
+		batch.dispose();
 		world.dispose();
 		b2dr.dispose();
 	}
 	public void update(boolean gameOver) {
 		world.step(1/60f, 6, 2);
 		camera.update();
+		batch.setProjectionMatrix(camera.combined);
 
 		if (!gameOver) {
 			deleteListUpdate();
 			inputUpdate();
-			enemies.forEach(enemy -> enemyUpdate(enemy));
+
 			bullets.forEach(bullet -> bulletUpdate(bullet));
+			enemies.forEach(enemy -> enemyUpdate(enemy));
+
 			playerHealthUpdate();
 		}
 		else {
@@ -114,7 +145,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		if (Gdx.input.isKeyPressed(Input.Keys.S)) {
 			verticalForce -= 1;
 		}
-		if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
+		if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
 			addNewBullet();
 		}
 		player.body.setLinearVelocity(horizontalForce * Const.playerSpeed, verticalForce * Const.playerSpeed);
@@ -185,6 +216,22 @@ public class MyGdxGame extends ApplicationAdapter {
 			}, Const.playerAttackSpeed/1000f);
 		}
 	}
+	public void addNewEnemy() {
+		if (newEnemy) {
+			newEnemy = false;
+			int x = getSpawnPosition(true);
+			int y = getSpawnPosition(false);
+			Enemy enemy = new Enemy(world, x, y);
+			enemies.add(enemy);
+			Timer timer = new Timer();
+			timer.scheduleTask(new Timer.Task() {
+				@Override
+				public void run() {
+					newEnemy = true;
+				}
+			}, Const.enemiesSpawnTime/1000f);
+		}
+	}
 	public void createNewPlayer() {
 		int width = Gdx.graphics.getWidth();
 		int height = Gdx.graphics.getHeight();
@@ -210,11 +257,9 @@ public class MyGdxGame extends ApplicationAdapter {
 				.collect(Collectors.toList());
 		enemies.addAll(newEnemies);
 	}
-	public void addNewEnemy() {
-		int x = getSpawnPosition(true);
-		int y = getSpawnPosition(false);
-		Enemy enemy = new Enemy(world, x, y);
-		enemies.add(enemy);
+	public void clearBullets() {
+		bullets.forEach(bullet -> world.destroyBody(bullet.body));
+		bullets.clear();
 	}
 	public int getSpawnPosition(boolean isX) {
 		int pos;

@@ -19,6 +19,7 @@ public class Entity {
                   short mBits,
                   int ID,
                   boolean isStatic,
+                  boolean isRound,
                   float density) {
         this.width = width;
         this.height = height;
@@ -26,9 +27,9 @@ public class Entity {
         this.mBits = mBits;
         this.ID = ID;
         this.density = density;
-        createBody(world, x, y, isStatic);
+        createBody(world, x, y, isStatic, isRound);
     }
-    private void createBody(World world, float x, float y, boolean isStatic) {
+    private void createBody(World world, float x, float y, boolean isStatic, boolean isRound) {
         float PPM = Const.PPM;
         BodyDef def = new BodyDef();
 
@@ -37,11 +38,19 @@ public class Entity {
         def.position.set(x/PPM,y/PPM);
         def.fixedRotation = true;
 
-        PolygonShape shape = new PolygonShape();
-        shape.setAsBox(width/2/PPM, height/2/PPM);
-
         FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.shape = shape;
+
+        if (isRound) {
+            CircleShape circleShape = new CircleShape();
+            circleShape.setRadius(width / 2 / PPM);
+            fixtureDef.shape = circleShape;
+        }
+        else {
+            PolygonShape shape = new PolygonShape();
+            shape.setAsBox(width / 2 / PPM, height / 2 / PPM);
+            fixtureDef.shape = shape;
+        }
+
         fixtureDef.density = density;
         fixtureDef.filter.categoryBits = cBits;
         fixtureDef.filter.maskBits = mBits;

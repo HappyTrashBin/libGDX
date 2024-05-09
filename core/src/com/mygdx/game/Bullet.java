@@ -11,7 +11,7 @@ public class Bullet extends Entity{
     private final static float density = 0.01f;
     private final Vector2 point = new Vector2();
     public Bullet(World world, float X0, float Y0, float X1, float Y1) {
-        super(world, X0, Y0, size, size, cBits, mBits, ID, false, density);
+        super(world, X0, Y0, size, size, cBits, mBits, ID, false, true, density);
 
         float X2;
         if (X1 - X0 > 0) { X2 = 850;}

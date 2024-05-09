@@ -13,6 +13,9 @@ public class CollisionProcessing implements ContactListener {
         Fixture A = contact.getFixtureA();
         Fixture B = contact.getFixtureB();
 
+        if (A == null || B == null) return;
+        if (A.getUserData() == null || B.getUserData() == null) return;
+
         if (A.getUserData().equals(2) && B.getUserData().equals(3)) {
             damageList.add(A.getBody());
         }
@@ -39,6 +42,9 @@ public class CollisionProcessing implements ContactListener {
     public void postSolve(Contact contact, ContactImpulse contactImpulse) {
         Fixture A = contact.getFixtureA();
         Fixture B = contact.getFixtureB();
+
+        if (A == null || B == null) return;
+        if (A.getUserData() == null || B.getUserData() == null) return;
 
         if (A.getUserData().equals(3)) {
             deleteList.add(A.getBody());
