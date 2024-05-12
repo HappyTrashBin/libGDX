@@ -71,12 +71,16 @@ public class MyGdxGame extends ApplicationAdapter {
 			batch.begin();
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 			batch.draw(backgroundTextureMain, 0, 0);
-			batch.draw(new Texture("YellowC.png"), player.body.getPosition().x * PPM - 16, player.body.getPosition().y * PPM - 16, 32, 32);
+			batch.draw(new Texture("YellowC.png"),
+					player.body.getPosition().x * PPM * 2 - 32,
+					player.body.getPosition().y * PPM * 2 - 32,
+					64,
+					64);
 			enemies.forEach(enemy -> {
 				if (!enemy.destroyed) {
 					batch.draw(new Texture("RedC.png"),
-							enemy.body.getPosition().x * PPM - 16,
-							enemy.body.getPosition().y * PPM - 16,
+							enemy.body.getPosition().x * PPM * 2 - 32,
+							enemy.body.getPosition().y * PPM * 2 - 32,
 							32,
 							32);
 				}
@@ -111,7 +115,7 @@ public class MyGdxGame extends ApplicationAdapter {
 	public void update(boolean gameOver) {
 		world.step(1/60f, 6, 2);
 		camera.update();
-		batch.setProjectionMatrix(camera.combined);
+		//batch.setProjectionMatrix(camera.combined);
 
 		if (!gameOver) {
 			deleteListUpdate();
@@ -231,6 +235,15 @@ public class MyGdxGame extends ApplicationAdapter {
 				}
 			}, Const.enemiesSpawnTime/1000f);
 		}
+	}
+	public boolean allDeadEnemiesCheck() {
+		boolean allDead = true;
+		for (Enemy enemy : enemies) {
+			if (!enemy.destroyed) {
+				allDead = false;
+			}
+		}
+		return allDead;
 	}
 	public void createNewPlayer() {
 		int width = Gdx.graphics.getWidth();
