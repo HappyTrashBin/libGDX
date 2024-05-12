@@ -28,10 +28,11 @@ public class MyGdxGame extends ApplicationAdapter {
 	private ArrayList<Body> damageList = new ArrayList<>();
 	private Box2DDebugRenderer b2dr;
 	private final float PPM = Const.PPM;
-	private final int enemyCount = 5;
+	private final int enemyCount = 2;
 	private Screen currentScreen = Screen.TITLE;
 	private boolean canShoot = true;
 	private boolean newEnemy = true;
+	private boolean gameWin = false;
 	private SpriteBatch batch;
 	private TextureRegion backgroundTextureTitle;
 	private TextureRegion backgroundTextureMain;
@@ -72,15 +73,15 @@ public class MyGdxGame extends ApplicationAdapter {
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 			batch.draw(backgroundTextureMain, 0, 0);
 			batch.draw(new Texture("YellowC.png"),
-					player.body.getPosition().x * PPM * 2 - 32,
-					player.body.getPosition().y * PPM * 2 - 32,
-					64,
-					64);
+					player.body.getPosition().x * PPM - 16,
+					player.body.getPosition().y * PPM - 16,
+					32,
+					32);
 			enemies.forEach(enemy -> {
-				if (!enemy.destroyed) {
+				if (enemy.health > 0) {
 					batch.draw(new Texture("RedC.png"),
-							enemy.body.getPosition().x * PPM * 2 - 32,
-							enemy.body.getPosition().y * PPM * 2 - 32,
+							enemy.body.getPosition().x * PPM - 16,
+							enemy.body.getPosition().y * PPM - 16,
 							32,
 							32);
 				}
@@ -91,13 +92,30 @@ public class MyGdxGame extends ApplicationAdapter {
 		}
 		else if (currentScreen == Screen.GAME_OVER) {
 			batch.begin();
-			batch.draw(backgroundTextureOver, 0, 0);
+			batch.draw(backgroundTextureOver, 0, 0, 800, 450);
+			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+			if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+				currentScreen = Screen.MAIN_GAME;
+				bullets.forEach(bullet -> world.destroyBody(bullet.body));
+				clearBullets();
+				createNewPlayer();
+				enemies.forEach(enemy -> world.destroyBody(enemy.body));
+				enemies.clear();
+				createNewEnemies(enemyCount);
+			}
+			batch.end();
+		}
+		else if (currentScreen == Screen.WIN) {
+			batch.begin();
+			batch.draw(backgroundTextureTitle, 0, 0, 800, 450);
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 			if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
 				currentScreen = Screen.MAIN_GAME;
 				clearBullets();
 				createNewPlayer();
+				enemies.clear();
 				createNewEnemies(enemyCount);
+				gameWin = false;
 			}
 			batch.end();
 		}
@@ -115,22 +133,29 @@ public class MyGdxGame extends ApplicationAdapter {
 	public void update(boolean gameOver) {
 		world.step(1/60f, 6, 2);
 		camera.update();
-		//batch.setProjectionMatrix(camera.combined);
+		batch.setProjectionMatrix(camera.combined);
 
-		if (!gameOver) {
+		if (!gameOver && !gameWin) {
 			deleteListUpdate();
 			inputUpdate();
 
 			bullets.forEach(bullet -> bulletUpdate(bullet));
 			enemies.forEach(enemy -> enemyUpdate(enemy));
+			gameWin = allDeadEnemiesCheck();
 
 			playerHealthUpdate();
 		}
-		else {
+		else if (gameOver && !gameWin){
 			enemies.forEach(enemy -> enemy.body.setLinearVelocity(0,0));
 			bullets.forEach(bullet -> bullet.body.setLinearVelocity(0,0));
 			player.body.setLinearVelocity(0,0);
 			currentScreen = Screen.GAME_OVER;
+		}
+		else if (!gameOver && gameWin) {
+			enemies.forEach(enemy -> enemy.body.setLinearVelocity(0,0));
+			bullets.forEach(bullet -> bullet.body.setLinearVelocity(0,0));
+			player.body.setLinearVelocity(0,0);
+			currentScreen = Screen.WIN;
 		}
 	}
 	public void inputUpdate() {
@@ -151,6 +176,9 @@ public class MyGdxGame extends ApplicationAdapter {
 		}
 		if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
 			addNewBullet();
+		}
+		if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
+			gameWin = true;
 		}
 		player.body.setLinearVelocity(horizontalForce * Const.playerSpeed, verticalForce * Const.playerSpeed);
 	}
@@ -259,8 +287,6 @@ public class MyGdxGame extends ApplicationAdapter {
 		Border downBoarder = new Border(world,0,0,width,1);
 	}
 	public void createNewEnemies(int count) {
-		enemies.forEach(enemy -> world.destroyBody(enemy.body));
-		enemies.clear();
 		List<Enemy> newEnemies = IntStream.range(0, count)
 				.mapToObj(i -> {
 					int x = getSpawnPosition(true);
@@ -271,7 +297,6 @@ public class MyGdxGame extends ApplicationAdapter {
 		enemies.addAll(newEnemies);
 	}
 	public void clearBullets() {
-		bullets.forEach(bullet -> world.destroyBody(bullet.body));
 		bullets.clear();
 	}
 	public int getSpawnPosition(boolean isX) {
