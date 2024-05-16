@@ -5,7 +5,7 @@ import com.badlogic.gdx.physics.box2d.World;
 public class Player extends Entity{
     private final static int size = Const.playerSize;
     private final static short cBits = 1;
-    private final static short mBits = 2;
+    private final static short mBits = (2 | 8);
     private final static int ID = 1;
     private final static float density = 20.0f;
     public int health = 100;

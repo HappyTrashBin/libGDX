@@ -5,7 +5,7 @@ import com.badlogic.gdx.physics.box2d.World;
 public class Enemy extends Entity{
     private final static int size = Const.enemySize;
     private final static short cBits = 2;
-    private final static short mBits = (2 | 1 | 4);
+    private final static short mBits = (2 | 1 | 4 | 8);
     private final static int ID = 2;
     private final static float density = 10.0f;
     public int health = 100;

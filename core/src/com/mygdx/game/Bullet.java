@@ -6,7 +6,7 @@ import com.badlogic.gdx.physics.box2d.World;
 public class Bullet extends Entity{
     private final static int size = Const.bulletSize;
     private final static short cBits = 4;
-    private final static short mBits = 2;
+    private final static short mBits = (2 | 8);
     private final static int ID = 3;
     private final static float density = 0.01f;
     public int health = 15;

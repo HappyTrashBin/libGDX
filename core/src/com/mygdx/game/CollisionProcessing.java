@@ -5,7 +5,6 @@ import com.badlogic.gdx.physics.box2d.*;
 import java.util.ArrayList;
 
 public class CollisionProcessing implements ContactListener {
-    public static ArrayList<Body> deleteList = new ArrayList<>();
     public static ArrayList<Body> damageList = new ArrayList<>();
     public static boolean playerDamage = false;
     @Override
@@ -24,6 +23,14 @@ public class CollisionProcessing implements ContactListener {
             damageList.add(B.getBody());
             damageList.add(A.getBody());
         }
+
+        if (A.getUserData().equals(4) && B.getUserData().equals(3)) {
+            damageList.add(B.getBody());
+        }
+        if (B.getUserData().equals(4) && A.getUserData().equals(3)) {
+            damageList.add(A.getBody());
+        }
+
         if (A.getUserData().equals(1) && B.getUserData().equals(2)) {
             playerDamage = true;
         }
@@ -49,16 +56,11 @@ public class CollisionProcessing implements ContactListener {
         if (A.getUserData() == null || B.getUserData() == null) return;
 
         if (A.getUserData().equals(3)) {
-            //deleteList.add(A.getBody());
             B.getBody().setLinearVelocity(0,0);
         }
         if (B.getUserData().equals(3)) {
-            //deleteList.add(B.getBody());
             A.getBody().setLinearVelocity(0,0);
         }
-    }
-    public static void clearDeleteList() {
-        deleteList.clear();
     }
     public static void clearDamageList() {
         damageList.clear();

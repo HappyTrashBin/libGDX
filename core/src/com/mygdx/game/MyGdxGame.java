@@ -33,11 +33,13 @@ public class MyGdxGame extends ApplicationAdapter {
 	private boolean canShoot = true;
 	private boolean newEnemy = true;
 	private boolean gameWin = false;
+	private boolean pause = false;
 	private SpriteBatch batch;
 	private TextureRegion backgroundTextureTitle;
 	private TextureRegion backgroundTextureMain;
 	private TextureRegion backgroundTextureOver;
 	private TextureRegion backgroundTextureWin;
+	private TextureRegion pauseTexture;
 	@Override
 	public void create () {
 		int width = Gdx.graphics.getWidth();
@@ -58,6 +60,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		backgroundTextureMain = new TextureRegion(new Texture("field.png"), 1600, 900);
 		backgroundTextureOver = new TextureRegion(new Texture("game_over.png"), 1600, 900);
 		backgroundTextureWin = new TextureRegion(new Texture("game_win.png"), 1600, 900);
+		pauseTexture = new TextureRegion(new Texture("pause.png"), 320, 180);
 
 	}
 	@Override
@@ -97,6 +100,9 @@ public class MyGdxGame extends ApplicationAdapter {
 							16);
 				}
 			});
+			if (pause) {
+				batch.draw(pauseTexture, 640/2, 360/2, 160, 80);
+			}
 			update(player.gameOver);
 			b2dr.render(world, camera.combined.scl(PPM));
 			batch.end();
@@ -145,16 +151,24 @@ public class MyGdxGame extends ApplicationAdapter {
 		world.step(1/60f, 6, 2);
 		camera.update();
 		batch.setProjectionMatrix(camera.combined);
-
 		if (!gameOver && !gameWin) {
-			//deleteListUpdate();
-			inputUpdate();
+			if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+				pause = !pause;
+			}
+			if (!pause) {
+				inputUpdate();
 
-			bullets.forEach(bullet -> bulletUpdate(bullet));
-			enemies.forEach(enemy -> enemyUpdate(enemy));
-			gameWin = allDeadEnemiesCheck();
+				bullets.forEach(bullet -> bulletUpdate(bullet));
+				enemies.forEach(enemy -> enemyUpdate(enemy));
+				gameWin = allDeadEnemiesCheck();
 
-			playerHealthUpdate();
+				playerHealthUpdate();
+			}
+			else {
+				enemies.forEach(enemy -> enemy.body.setLinearVelocity(0,0));
+				bullets.forEach(bullet -> bullet.body.setLinearVelocity(0,0));
+				player.body.setLinearVelocity(0,0);
+			}
 		}
 		else if (gameOver && !gameWin){
 			enemies.forEach(enemy -> enemy.body.setLinearVelocity(0,0));
@@ -223,14 +237,6 @@ public class MyGdxGame extends ApplicationAdapter {
 				bullet.setDestroyed();
 			}
 		}
-	}
-	public void deleteListUpdate() {
-		deleteList = CollisionProcessing.deleteList;
-		deleteList.forEach(obj -> {
-			obj.setActive(false);
-			world.destroyBody(obj);
-		});
-		CollisionProcessing.clearDeleteList();
 	}
 	public void damageListUpdate() {
 		damageList = CollisionProcessing.damageList;
