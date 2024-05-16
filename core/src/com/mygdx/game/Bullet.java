@@ -9,6 +9,8 @@ public class Bullet extends Entity{
     private final static short mBits = 2;
     private final static int ID = 3;
     private final static float density = 0.01f;
+    public int health = 15;
+    public boolean destroyed = false;
     private final Vector2 point = new Vector2();
     public Bullet(World world, float X0, float Y0, float X1, float Y1) {
         super(world, X0, Y0, size, size, cBits, mBits, ID, false, true, density);
@@ -18,6 +20,12 @@ public class Bullet extends Entity{
         else {X2 = -50;}
         float Y2 = ((Y1 - Y0)*X2 + (Y0*X1 - Y1*X0)) / (X1 - X0);
         point.set(X2, Y2);
+    }
+    public void getDamage(int damage) {
+        this.health -= damage;
+    }
+    public void setDestroyed() {
+        this.destroyed = true;
     }
     public Vector2 getPoint() {
         return point;

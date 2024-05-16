@@ -18,9 +18,11 @@ public class CollisionProcessing implements ContactListener {
 
         if (A.getUserData().equals(2) && B.getUserData().equals(3)) {
             damageList.add(A.getBody());
+            damageList.add(B.getBody());
         }
         if (B.getUserData().equals(2) && A.getUserData().equals(3)) {
             damageList.add(B.getBody());
+            damageList.add(A.getBody());
         }
         if (A.getUserData().equals(1) && B.getUserData().equals(2)) {
             playerDamage = true;
@@ -47,11 +49,11 @@ public class CollisionProcessing implements ContactListener {
         if (A.getUserData() == null || B.getUserData() == null) return;
 
         if (A.getUserData().equals(3)) {
-            deleteList.add(A.getBody());
+            //deleteList.add(A.getBody());
             B.getBody().setLinearVelocity(0,0);
         }
         if (B.getUserData().equals(3)) {
-            deleteList.add(B.getBody());
+            //deleteList.add(B.getBody());
             A.getBody().setLinearVelocity(0,0);
         }
     }

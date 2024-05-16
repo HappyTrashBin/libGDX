@@ -37,6 +37,7 @@ public class MyGdxGame extends ApplicationAdapter {
 	private TextureRegion backgroundTextureTitle;
 	private TextureRegion backgroundTextureMain;
 	private TextureRegion backgroundTextureOver;
+	private TextureRegion backgroundTextureWin;
 	@Override
 	public void create () {
 		int width = Gdx.graphics.getWidth();
@@ -56,6 +57,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		backgroundTextureTitle = new TextureRegion(new Texture("title.png"), 1600, 900);
 		backgroundTextureMain = new TextureRegion(new Texture("field.png"), 1600, 900);
 		backgroundTextureOver = new TextureRegion(new Texture("game_over.png"), 1600, 900);
+		backgroundTextureWin = new TextureRegion(new Texture("game_win.png"), 1600, 900);
 
 	}
 	@Override
@@ -86,6 +88,15 @@ public class MyGdxGame extends ApplicationAdapter {
 							32);
 				}
 			});
+			bullets.forEach(bullet -> {
+				if (bullet.health > 0) {
+					batch.draw(new Texture("BlueC.png"),
+							bullet.body.getPosition().x * PPM - 8,
+							bullet.body.getPosition().y * PPM - 8,
+							16,
+							16);
+				}
+			});
 			update(player.gameOver);
 			b2dr.render(world, camera.combined.scl(PPM));
 			batch.end();
@@ -107,7 +118,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		}
 		else if (currentScreen == Screen.WIN) {
 			batch.begin();
-			batch.draw(backgroundTextureTitle, 0, 0, 800, 450);
+			batch.draw(backgroundTextureWin, 0, 0, 800, 450);
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 			if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
 				currentScreen = Screen.MAIN_GAME;
@@ -136,7 +147,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		batch.setProjectionMatrix(camera.combined);
 
 		if (!gameOver && !gameWin) {
-			deleteListUpdate();
+			//deleteListUpdate();
 			inputUpdate();
 
 			bullets.forEach(bullet -> bulletUpdate(bullet));
@@ -199,10 +210,19 @@ public class MyGdxGame extends ApplicationAdapter {
 		damageListUpdate();
 	}
 	public void bulletUpdate(Bullet bullet) {
-		float Dx = (bullet.getPoint().x - bullet.body.getPosition().x * PPM);
-		float Dy = (bullet.getPoint().y - bullet.body.getPosition().y * PPM);
-		float vector = (float) Math.sqrt(Dx*Dx + Dy*Dy);
-		bullet.body.setLinearVelocity(Dx/vector * 10, Dy/vector * 10);
+		if (bullet.health > 0) {
+			float Dx = (bullet.getPoint().x - bullet.body.getPosition().x * PPM);
+			float Dy = (bullet.getPoint().y - bullet.body.getPosition().y * PPM);
+			float vector = (float) Math.sqrt(Dx * Dx + Dy * Dy);
+			bullet.body.setLinearVelocity(Dx / vector * 10, Dy / vector * 10);
+		}
+		else {
+			if (!bullet.destroyed) {
+				bullet.body.setActive(false);
+				world.destroyBody(bullet.body);
+				bullet.setDestroyed();
+			}
+		}
 	}
 	public void deleteListUpdate() {
 		deleteList = CollisionProcessing.deleteList;
@@ -214,9 +234,14 @@ public class MyGdxGame extends ApplicationAdapter {
 	}
 	public void damageListUpdate() {
 		damageList = CollisionProcessing.damageList;
-		damageList.forEach(obj -> enemies.forEach(enemy -> {
-			if (enemy.body == obj) enemy.getDamage(Const.playerDamage);
-		}));
+		damageList.forEach(obj -> {
+			enemies.forEach(enemy -> {
+				if (enemy.body == obj) enemy.getDamage(Const.playerDamage);
+			});
+			bullets.forEach(bullet -> {
+				if (bullet.body == obj) bullet.getDamage(20);
+			});
+		});
 		CollisionProcessing.clearDamageList();
 	}
 	public void playerHealthUpdate() {
