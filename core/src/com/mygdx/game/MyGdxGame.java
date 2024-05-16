@@ -6,6 +6,8 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
@@ -28,7 +30,7 @@ public class MyGdxGame extends ApplicationAdapter {
 	private ArrayList<Body> damageList = new ArrayList<>();
 	private Box2DDebugRenderer b2dr;
 	private final float PPM = Const.PPM;
-	private final int enemyCount = 2;
+	private int enemyCount = 2;
 	private Screen currentScreen = Screen.TITLE;
 	private boolean canShoot = true;
 	private boolean newEnemy = true;
@@ -39,7 +41,10 @@ public class MyGdxGame extends ApplicationAdapter {
 	private TextureRegion backgroundTextureMain;
 	private TextureRegion backgroundTextureOver;
 	private TextureRegion backgroundTextureWin;
+	private TextureRegion healthBackground;
+	private TextureRegion health;
 	private TextureRegion pauseTexture;
+	private BitmapFont font;
 	@Override
 	public void create () {
 		int width = Gdx.graphics.getWidth();
@@ -61,7 +66,10 @@ public class MyGdxGame extends ApplicationAdapter {
 		backgroundTextureOver = new TextureRegion(new Texture("game_over.png"), 1600, 900);
 		backgroundTextureWin = new TextureRegion(new Texture("game_win.png"), 1600, 900);
 		pauseTexture = new TextureRegion(new Texture("pause.png"), 320, 180);
-
+		healthBackground = new TextureRegion(new Texture("healthBackground.png"), 400, 100);
+		health = new TextureRegion(new Texture("health.png"), 400, 100);
+		font = new BitmapFont();
+		font.setColor(0,0,0,1);
 	}
 	@Override
 	public void render () {
@@ -100,6 +108,7 @@ public class MyGdxGame extends ApplicationAdapter {
 							16);
 				}
 			});
+			drawHealth(batch);
 			if (pause) {
 				batch.draw(pauseTexture, 640/2, 360/2, 160, 80);
 			}
@@ -128,6 +137,11 @@ public class MyGdxGame extends ApplicationAdapter {
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 			if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
 				currentScreen = Screen.MAIN_GAME;
+				bullets.forEach(bullet -> {
+					if (!bullet.destroyed) {
+						world.destroyBody(bullet.body);
+					}
+				});
 				clearBullets();
 				createNewPlayer();
 				enemies.clear();
@@ -180,6 +194,7 @@ public class MyGdxGame extends ApplicationAdapter {
 			enemies.forEach(enemy -> enemy.body.setLinearVelocity(0,0));
 			bullets.forEach(bullet -> bullet.body.setLinearVelocity(0,0));
 			player.body.setLinearVelocity(0,0);
+			enemyCount += 3;
 			currentScreen = Screen.WIN;
 		}
 	}
@@ -348,5 +363,11 @@ public class MyGdxGame extends ApplicationAdapter {
 		else {
 			return getSpawnPosition(isX);
 		}
+	}
+	public void drawHealth(Batch batch){
+		font.draw(batch, "Health", 5, 445);
+		font.draw(batch, String.valueOf(player.health), 5, 428);
+		batch.draw(healthBackground, 35, 415, 75, 15);
+		batch.draw(health, 37, 417, 71*player.health/100, 11);
 	}
 }
