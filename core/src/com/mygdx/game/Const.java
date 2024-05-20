@@ -9,6 +9,7 @@ public final class Const {
     public final static int enemySize = 32;
     public final static int bulletSize = 16;
     public final static int safeZone = 64;
+    public static int playerHealth = 100;
     public static int playerDamage = 25;
     public static int playerSpeed = 5;
     public static int playerAttackSpeed = 500;

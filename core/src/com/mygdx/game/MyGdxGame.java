@@ -36,13 +36,17 @@ public class MyGdxGame extends ApplicationAdapter {
 	private boolean newEnemy = true;
 	private boolean gameWin = false;
 	private boolean pause = false;
+	private boolean canGetUpgrade = true;
+	private int damageUpdateCount = 0;
+	private int speedUpdateCount = 0;
+	private int healthUpdateCount = 0;
 	private SpriteBatch batch;
 	private TextureRegion backgroundTextureTitle;
 	private TextureRegion backgroundTextureMain;
 	private TextureRegion backgroundTextureOver;
 	private TextureRegion backgroundTextureWin;
-	private TextureRegion healthBackground;
-	private TextureRegion health;
+	private TextureRegion WhiteRect;
+	private TextureRegion RedRect;
 	private TextureRegion pauseTexture;
 	private BitmapFont font;
 	@Override
@@ -66,8 +70,8 @@ public class MyGdxGame extends ApplicationAdapter {
 		backgroundTextureOver = new TextureRegion(new Texture("game_over.png"), 1600, 900);
 		backgroundTextureWin = new TextureRegion(new Texture("game_win.png"), 1600, 900);
 		pauseTexture = new TextureRegion(new Texture("pause.png"), 320, 180);
-		healthBackground = new TextureRegion(new Texture("healthBackground.png"), 400, 100);
-		health = new TextureRegion(new Texture("health.png"), 400, 100);
+		WhiteRect = new TextureRegion(new Texture("WhiteRect.png"), 400, 100);
+		RedRect = new TextureRegion(new Texture("RedRect.png"), 400, 100);
 		font = new BitmapFont();
 		font.setColor(0,0,0,1);
 	}
@@ -135,6 +139,7 @@ public class MyGdxGame extends ApplicationAdapter {
 			batch.begin();
 			batch.draw(backgroundTextureWin, 0, 0, 800, 450);
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+			drawUpgrades(batch);
 			if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
 				currentScreen = Screen.MAIN_GAME;
 				bullets.forEach(bullet -> {
@@ -147,6 +152,24 @@ public class MyGdxGame extends ApplicationAdapter {
 				enemies.clear();
 				createNewEnemies(enemyCount);
 				gameWin = false;
+			}
+			if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1) && canGetUpgrade && (damageUpdateCount < 3)) {
+				System.out.println("Damage +");
+				Const.playerDamage += 10;
+				damageUpdateCount += 1;
+				canGetUpgrade = false;
+			}
+			if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2) && canGetUpgrade && (speedUpdateCount < 3)) {
+				System.out.println("Speed +");
+				Const.playerSpeed += 1;
+				speedUpdateCount += 1;
+				canGetUpgrade = false;
+			}
+			if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3) && canGetUpgrade && (healthUpdateCount < 3)) {
+				System.out.println("Health +");
+				Const.playerHealth += 20;
+				healthUpdateCount += 1;
+				canGetUpgrade = false;
 			}
 			batch.end();
 		}
@@ -188,13 +211,19 @@ public class MyGdxGame extends ApplicationAdapter {
 			enemies.forEach(enemy -> enemy.body.setLinearVelocity(0,0));
 			bullets.forEach(bullet -> bullet.body.setLinearVelocity(0,0));
 			player.body.setLinearVelocity(0,0);
+			damageUpdateCount = 0;
+			speedUpdateCount = 0;
+			healthUpdateCount = 0;
+
 			currentScreen = Screen.GAME_OVER;
 		}
 		else if (!gameOver && gameWin) {
 			enemies.forEach(enemy -> enemy.body.setLinearVelocity(0,0));
 			bullets.forEach(bullet -> bullet.body.setLinearVelocity(0,0));
 			player.body.setLinearVelocity(0,0);
-			enemyCount += 3;
+			enemyCount += 1;
+			canGetUpgrade = true;
+
 			currentScreen = Screen.WIN;
 		}
 	}
@@ -367,7 +396,27 @@ public class MyGdxGame extends ApplicationAdapter {
 	public void drawHealth(Batch batch){
 		font.draw(batch, "Health", 5, 445);
 		font.draw(batch, String.valueOf(player.health), 5, 428);
-		batch.draw(healthBackground, 35, 415, 75, 15);
-		batch.draw(health, 37, 417, 71*player.health/100, 11);
+		batch.draw(WhiteRect, 35, 415, 75, 15);
+		batch.draw(RedRect, 37, 417, 71*player.health/100, 11);
+	}
+	public void drawUpgrades(Batch batch){
+		font.draw(batch, "Damage upgrades", 140, 170);
+		font.draw(batch, "Speed upgrades", 343, 170);
+		font.draw(batch, "Health upgrades", 547, 170);
+
+		for (int i = 0; i < 3; i++) {
+			for (int j = 0; j < 3; j++) {
+				batch.draw(WhiteRect, 160 + i*200, 50 + j*30, 80, 20);
+			}
+		}
+		for (int i = 0; i < damageUpdateCount; i++) {
+			batch.draw(RedRect, 162, 52 + i*30, 76, 16);
+		}
+		for (int i = 0; i < speedUpdateCount; i++) {
+			batch.draw(RedRect, 362, 52 + i*30, 76, 16);
+		}
+		for (int i = 0; i < healthUpdateCount; i++) {
+			batch.draw(RedRect, 562, 52 + i*30, 76, 16);
+		}
 	}
 }

@@ -8,7 +8,7 @@ public class Player extends Entity{
     private final static short mBits = (2 | 8);
     private final static int ID = 1;
     private final static float density = 20.0f;
-    public int health = 100;
+    public int health = Const.playerHealth;
     public boolean gameOver = false;
 
     public Player(World world, float x, float y) {
@@ -19,9 +19,5 @@ public class Player extends Entity{
     }
     public void youLose() {
         this.gameOver = true;
-    }
-    public void moreHealth() {
-        this.health = 100;
-        this.health += 50;
     }
 }
