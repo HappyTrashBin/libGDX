@@ -26,11 +26,12 @@ public class MyGdxGame extends ApplicationAdapter {
 	private Player player;
 	private final ArrayList<Enemy> enemies = new ArrayList<>();
 	private final ArrayList<Bullet> bullets = new ArrayList<>();
+	private ArrayList<Building> buildings = new ArrayList<>();;
 	private ArrayList<Body> deleteList = new ArrayList<>();
 	private ArrayList<Body> damageList = new ArrayList<>();
 	private Box2DDebugRenderer b2dr;
 	private final float PPM = Const.PPM;
-	private int enemyCount = 2;
+	private int enemyCount = 1;
 	private Screen currentScreen = Screen.TITLE;
 	private boolean canShoot = true;
 	private boolean newEnemy = true;
@@ -40,6 +41,7 @@ public class MyGdxGame extends ApplicationAdapter {
 	private int damageUpdateCount = 0;
 	private int speedUpdateCount = 0;
 	private int healthUpdateCount = 0;
+	private int score = 0;
 	private SpriteBatch batch;
 	private TextureRegion backgroundTextureTitle;
 	private TextureRegion backgroundTextureMain;
@@ -125,13 +127,7 @@ public class MyGdxGame extends ApplicationAdapter {
 			batch.draw(backgroundTextureOver, 0, 0, 800, 450);
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 			if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-				currentScreen = Screen.MAIN_GAME;
-				bullets.forEach(bullet -> world.destroyBody(bullet.body));
-				clearBullets();
-				createNewPlayer();
-				enemies.forEach(enemy -> world.destroyBody(enemy.body));
-				enemies.clear();
-				createNewEnemies(enemyCount);
+				createNewGame();
 			}
 			batch.end();
 		}
@@ -139,19 +135,14 @@ public class MyGdxGame extends ApplicationAdapter {
 			batch.begin();
 			batch.draw(backgroundTextureWin, 0, 0, 800, 450);
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-			drawUpgrades(batch);
+			drawPlayerUpgrades(batch);
 			if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-				currentScreen = Screen.MAIN_GAME;
-				bullets.forEach(bullet -> {
-					if (!bullet.destroyed) {
-						world.destroyBody(bullet.body);
-					}
-				});
-				clearBullets();
-				createNewPlayer();
-				enemies.clear();
-				createNewEnemies(enemyCount);
+				createNewGame();
 				gameWin = false;
+			}
+			if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
+				clearEntities();
+				currentScreen = Screen.VILLAGE;
 			}
 			if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1) && canGetUpgrade && (damageUpdateCount < 3)) {
 				System.out.println("Damage +");
@@ -173,6 +164,55 @@ public class MyGdxGame extends ApplicationAdapter {
 			}
 			batch.end();
 		}
+		else if (currentScreen == Screen.VILLAGE) {
+			batch.begin();
+			batch.draw(backgroundTextureMain, 0, 0);
+			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+			world.destroyBody(player.body);
+
+			font.draw(batch, "Points", 5, 445);
+			font.draw(batch, String.valueOf(score), 5, 428);
+
+			buildings.add(new Building(world,200,200,50,50));
+			buildings.add(new Building(world,400,300,50,50));
+			buildings.add(new Building(world,550,150,50,50));
+
+			boolean contact = false;
+			for (Building building : buildings) {
+				if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)
+						&& Gdx.input.getX()/2 > building.getX() - building.getWidth()
+						&& Gdx.input.getX()/2 < building.getX() + building.getWidth()
+						&& (Gdx.graphics.getHeight() - Gdx.input.getY())/2 > building.getY() - building.getHeight()
+						&& (Gdx.graphics.getHeight() - Gdx.input.getY())/2 < building.getY() + building.getHeight()
+						&& !contact) {
+					System.out.println("Contact");
+					contact = true;
+				}
+			}
+			contact = false;
+
+			if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+
+				buildings.forEach(building -> {
+					if (!building.destroyed) {
+						world.destroyBody(building.body);
+						building.destroyed = true;
+						System.out.println("dest");
+					}
+				});
+				buildings.clear();
+
+				createNewGame();
+				gameWin = false;
+			}
+
+			world.step(1/60f, 6, 2);
+			camera.update();
+			batch.setProjectionMatrix(camera.combined);
+			b2dr.render(world, camera.combined.scl(PPM));
+
+			batch.end();
+		}
 	}
 	@Override
 	public void resize(int width, int height) {
@@ -188,6 +228,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		world.step(1/60f, 6, 2);
 		camera.update();
 		batch.setProjectionMatrix(camera.combined);
+
 		if (!gameOver && !gameWin) {
 			if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
 				pause = !pause;
@@ -211,9 +252,11 @@ public class MyGdxGame extends ApplicationAdapter {
 			enemies.forEach(enemy -> enemy.body.setLinearVelocity(0,0));
 			bullets.forEach(bullet -> bullet.body.setLinearVelocity(0,0));
 			player.body.setLinearVelocity(0,0);
+			enemyCount = 2;
 			damageUpdateCount = 0;
 			speedUpdateCount = 0;
 			healthUpdateCount = 0;
+			score = 0;
 
 			currentScreen = Screen.GAME_OVER;
 		}
@@ -223,6 +266,7 @@ public class MyGdxGame extends ApplicationAdapter {
 			player.body.setLinearVelocity(0,0);
 			enemyCount += 1;
 			canGetUpgrade = true;
+			score += 10;
 
 			currentScreen = Screen.WIN;
 		}
@@ -348,6 +392,27 @@ public class MyGdxGame extends ApplicationAdapter {
 		}
 		return allDead;
 	}
+	public void createNewGame() {
+		clearEntities();
+		createNewPlayer();
+		createNewEnemies(enemyCount);
+	}
+	public void clearEntities() {
+		currentScreen = Screen.MAIN_GAME;
+		bullets.forEach(bullet -> {
+			if (!bullet.destroyed) {
+				world.destroyBody(bullet.body);
+			}
+		});
+		bullets.clear();
+
+		enemies.forEach(enemy -> {
+			if (!enemy.destroyed) {
+				world.destroyBody(enemy.body);
+			}
+		});
+		enemies.clear();
+	}
 	public void createNewPlayer() {
 		int width = Gdx.graphics.getWidth();
 		int height = Gdx.graphics.getHeight();
@@ -370,9 +435,6 @@ public class MyGdxGame extends ApplicationAdapter {
 				})
 				.collect(Collectors.toList());
 		enemies.addAll(newEnemies);
-	}
-	public void clearBullets() {
-		bullets.clear();
 	}
 	public int getSpawnPosition(boolean isX) {
 		int pos;
@@ -397,9 +459,9 @@ public class MyGdxGame extends ApplicationAdapter {
 		font.draw(batch, "Health", 5, 445);
 		font.draw(batch, String.valueOf(player.health), 5, 428);
 		batch.draw(WhiteRect, 35, 415, 75, 15);
-		batch.draw(RedRect, 37, 417, 71*player.health/100, 11);
+		batch.draw(RedRect, 37, 417, 71*player.health/Const.playerHealth, 11);
 	}
-	public void drawUpgrades(Batch batch){
+	public void drawPlayerUpgrades(Batch batch){
 		font.draw(batch, "Damage upgrades", 140, 170);
 		font.draw(batch, "Speed upgrades", 343, 170);
 		font.draw(batch, "Health upgrades", 547, 170);
