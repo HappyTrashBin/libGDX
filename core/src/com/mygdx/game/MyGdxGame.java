@@ -26,8 +26,7 @@ public class MyGdxGame extends ApplicationAdapter {
 	private Player player;
 	private final ArrayList<Enemy> enemies = new ArrayList<>();
 	private final ArrayList<Bullet> bullets = new ArrayList<>();
-	private ArrayList<Building> buildings = new ArrayList<>();;
-	private ArrayList<Body> deleteList = new ArrayList<>();
+	private ArrayList<Building> buildings = new ArrayList<>();
 	private ArrayList<Body> damageList = new ArrayList<>();
 	private Box2DDebugRenderer b2dr;
 	private final float PPM = Const.PPM;
@@ -65,6 +64,10 @@ public class MyGdxGame extends ApplicationAdapter {
 		createNewPlayer();
 		createBoarders(width,height);
 		createNewEnemies(enemyCount);
+
+		buildings.add(new Building(200,200,50,50, 1));
+		buildings.add(new Building(400,300,50,50, 2));
+		buildings.add(new Building(550,150,50,50, 3));
 
 		batch = new SpriteBatch();
 		backgroundTextureTitle = new TextureRegion(new Texture("title.png"), 1600, 900);
@@ -145,19 +148,16 @@ public class MyGdxGame extends ApplicationAdapter {
 				currentScreen = Screen.VILLAGE;
 			}
 			if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1) && canGetUpgrade && (damageUpdateCount < 3)) {
-				System.out.println("Damage +");
 				Const.playerDamage += 10;
 				damageUpdateCount += 1;
 				canGetUpgrade = false;
 			}
 			if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2) && canGetUpgrade && (speedUpdateCount < 3)) {
-				System.out.println("Speed +");
 				Const.playerSpeed += 1;
 				speedUpdateCount += 1;
 				canGetUpgrade = false;
 			}
 			if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3) && canGetUpgrade && (healthUpdateCount < 3)) {
-				System.out.println("Health +");
 				Const.playerHealth += 20;
 				healthUpdateCount += 1;
 				canGetUpgrade = false;
@@ -168,48 +168,60 @@ public class MyGdxGame extends ApplicationAdapter {
 			batch.begin();
 			batch.draw(backgroundTextureMain, 0, 0);
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-			world.destroyBody(player.body);
 
 			font.draw(batch, "Points", 5, 445);
 			font.draw(batch, String.valueOf(score), 5, 428);
 
-			buildings.add(new Building(world,200,200,50,50));
-			buildings.add(new Building(world,400,300,50,50));
-			buildings.add(new Building(world,550,150,50,50));
+			font.draw(batch, "More enemies and player speed", 200-100, 200-50);
+			font.draw(batch, "More enemies and player damage", 400-100, 300-50);
+			font.draw(batch, "More enemies and player health", 550-100, 150-50);
 
 			boolean contact = false;
 			for (Building building : buildings) {
-				if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)
-						&& Gdx.input.getX()/2 > building.getX() - building.getWidth()
+				if (!building.upgraded) {
+					batch.draw(WhiteRect,
+							building.getX() - building.getWidth(),
+							building.getY() - building.getHeight(),
+							building.getWidth() * 2,
+							building.getHeight() * 2);
+				}
+				else {
+					batch.draw(RedRect,
+							building.getX() - building.getWidth(),
+							building.getY() - building.getHeight(),
+							building.getWidth() * 2,
+							building.getHeight() * 2);
+				}
+				if (Gdx.input.getX()/2 > building.getX() - building.getWidth()
 						&& Gdx.input.getX()/2 < building.getX() + building.getWidth()
 						&& (Gdx.graphics.getHeight() - Gdx.input.getY())/2 > building.getY() - building.getHeight()
 						&& (Gdx.graphics.getHeight() - Gdx.input.getY())/2 < building.getY() + building.getHeight()
 						&& !contact) {
-					System.out.println("Contact");
-					contact = true;
+					if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && !building.upgraded) {
+						building.upgraded = true;
+						if (building.ID == 1) {
+							Const.playerSpeed += 1;
+							Const.enemiesSpeed += 1;
+						}
+						else if (building.ID == 2) {
+							Const.playerDamage += 5;
+							Const.enemiesDamage += 2;
+						}
+						else if (building.ID == 3) {
+							Const.playerHealth += 10;
+							Const.enemiesHealth += 5;
+						}
+						System.out.println("Contact "+building.ID);
+						contact = true;
+					}
 				}
 			}
 			contact = false;
 
 			if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-
-				buildings.forEach(building -> {
-					if (!building.destroyed) {
-						world.destroyBody(building.body);
-						building.destroyed = true;
-						System.out.println("dest");
-					}
-				});
-				buildings.clear();
-
 				createNewGame();
 				gameWin = false;
 			}
-
-			world.step(1/60f, 6, 2);
-			camera.update();
-			batch.setProjectionMatrix(camera.combined);
-			b2dr.render(world, camera.combined.scl(PPM));
 
 			batch.end();
 		}
@@ -365,22 +377,6 @@ public class MyGdxGame extends ApplicationAdapter {
 					canShoot = true;
 				}
 			}, Const.playerAttackSpeed/1000f);
-		}
-	}
-	public void addNewEnemy() {
-		if (newEnemy) {
-			newEnemy = false;
-			int x = getSpawnPosition(true);
-			int y = getSpawnPosition(false);
-			Enemy enemy = new Enemy(world, x, y);
-			enemies.add(enemy);
-			Timer timer = new Timer();
-			timer.scheduleTask(new Timer.Task() {
-				@Override
-				public void run() {
-					newEnemy = true;
-				}
-			}, Const.enemiesSpawnTime/1000f);
 		}
 	}
 	public boolean allDeadEnemiesCheck() {

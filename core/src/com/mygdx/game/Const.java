@@ -13,7 +13,7 @@ public final class Const {
     public static int playerDamage = 25;
     public static int playerSpeed = 5;
     public static int playerAttackSpeed = 500;
+    public static int enemiesHealth = 100;
     public static int enemiesDamage = 20;
     public static int enemiesSpeed = 2;
-    public static int enemiesSpawnTime = 3000;
 }

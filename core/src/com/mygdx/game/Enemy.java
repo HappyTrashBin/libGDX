@@ -8,7 +8,7 @@ public class Enemy extends Entity{
     private final static short mBits = (2 | 1 | 4 | 8);
     private final static int ID = 2;
     private final static float density = 10.0f;
-    public int health = 100;
+    public int health = Const.enemiesHealth;
     public boolean destroyed = false;
     public Enemy(World world, float x, float y) {
         super(world, x, y, size, size, cBits, mBits, ID, false, true, density);
