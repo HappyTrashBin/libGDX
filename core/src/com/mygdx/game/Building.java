@@ -7,12 +7,14 @@ public class Building {
     private final float height;
     public boolean upgraded = false;
     public final int ID;
-    public Building(float x, float y, float width, float height, int ID) {
+    public final int points;
+    public Building(float x, float y, float width, float height, int ID, int points) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
         this.ID = ID;
+        this.points = points;
     }
     public float getWidth() {
         return this.width;

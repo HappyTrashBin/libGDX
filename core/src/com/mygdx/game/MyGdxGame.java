@@ -3,6 +3,7 @@ package com.mygdx.game;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -49,6 +50,7 @@ public class MyGdxGame extends ApplicationAdapter {
 	private TextureRegion WhiteRect;
 	private TextureRegion RedRect;
 	private TextureRegion pauseTexture;
+	private Music music;
 	private BitmapFont font;
 	@Override
 	public void create () {
@@ -65,12 +67,12 @@ public class MyGdxGame extends ApplicationAdapter {
 		createBoarders(width,height);
 		createNewEnemies(enemyCount);
 
-		buildings.add(new Building(200,200,50,50, 1));
-		buildings.add(new Building(400,300,50,50, 2));
-		buildings.add(new Building(550,150,50,50, 3));
+		buildings.add(new Building(200,200,50,50, 1, 30));
+		buildings.add(new Building(400,300,50,50, 2, 10));
+		buildings.add(new Building(550,150,50,50, 3, 15));
 
 		batch = new SpriteBatch();
-		backgroundTextureTitle = new TextureRegion(new Texture("title.png"), 1600, 900);
+		backgroundTextureTitle = new TextureRegion(new Texture("title.jpg"), 1600, 900);
 		backgroundTextureMain = new TextureRegion(new Texture("field.png"), 1600, 900);
 		backgroundTextureOver = new TextureRegion(new Texture("game_over.png"), 1600, 900);
 		backgroundTextureWin = new TextureRegion(new Texture("game_win.png"), 1600, 900);
@@ -79,9 +81,13 @@ public class MyGdxGame extends ApplicationAdapter {
 		RedRect = new TextureRegion(new Texture("RedRect.png"), 400, 100);
 		font = new BitmapFont();
 		font.setColor(0,0,0,1);
+		music = Gdx.audio.newMusic(Gdx.files.internal("Persona_4_specialist.mp3"));
 	}
 	@Override
 	public void render () {
+		music.play();
+		music.setLooping(true);
+		music.setVolume(0.1f);
 		if (currentScreen == Screen.TITLE) {
 			batch.begin();
 			batch.draw(backgroundTextureTitle, 0, 0);
@@ -94,23 +100,23 @@ public class MyGdxGame extends ApplicationAdapter {
 			batch.begin();
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 			batch.draw(backgroundTextureMain, 0, 0);
-			batch.draw(new Texture("YellowC.png"),
-					player.body.getPosition().x * PPM - 16,
+			batch.draw(new Texture("tomato.png"),
+					player.body.getPosition().x * PPM - 20,
 					player.body.getPosition().y * PPM - 16,
-					32,
-					32);
+					40,
+					40);
 			enemies.forEach(enemy -> {
 				if (enemy.health > 0) {
-					batch.draw(new Texture("RedC.png"),
-							enemy.body.getPosition().x * PPM - 16,
+					batch.draw(new Texture("apple.png"),
+							enemy.body.getPosition().x * PPM - 20,
 							enemy.body.getPosition().y * PPM - 16,
-							32,
-							32);
+							40,
+							40);
 				}
 			});
 			bullets.forEach(bullet -> {
 				if (bullet.health > 0) {
-					batch.draw(new Texture("BlueC.png"),
+					batch.draw(new Texture("small_tomato.png"),
 							bullet.body.getPosition().x * PPM - 8,
 							bullet.body.getPosition().y * PPM - 8,
 							16,
@@ -172,9 +178,9 @@ public class MyGdxGame extends ApplicationAdapter {
 			font.draw(batch, "Points", 5, 445);
 			font.draw(batch, String.valueOf(score), 5, 428);
 
-			font.draw(batch, "More enemies and player speed", 200-100, 200-50);
-			font.draw(batch, "More enemies and player damage", 400-100, 300-50);
-			font.draw(batch, "More enemies and player health", 550-100, 150-50);
+			font.draw(batch, "More enemies and player speed (30)", 200-110, 200-50);
+			font.draw(batch, "More enemies and player damage (10)", 400-110, 300-50);
+			font.draw(batch, "More enemies and player health (15)", 550-110, 150-50);
 
 			boolean contact = false;
 			for (Building building : buildings) {
@@ -197,7 +203,7 @@ public class MyGdxGame extends ApplicationAdapter {
 						&& (Gdx.graphics.getHeight() - Gdx.input.getY())/2 > building.getY() - building.getHeight()
 						&& (Gdx.graphics.getHeight() - Gdx.input.getY())/2 < building.getY() + building.getHeight()
 						&& !contact) {
-					if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && !building.upgraded) {
+					if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && !building.upgraded && building.points <= score) {
 						building.upgraded = true;
 						if (building.ID == 1) {
 							Const.playerSpeed += 1;
@@ -211,6 +217,7 @@ public class MyGdxGame extends ApplicationAdapter {
 							Const.playerHealth += 10;
 							Const.enemiesHealth += 5;
 						}
+						score -= building.points;
 						System.out.println("Contact "+building.ID);
 						contact = true;
 					}
@@ -264,7 +271,7 @@ public class MyGdxGame extends ApplicationAdapter {
 			enemies.forEach(enemy -> enemy.body.setLinearVelocity(0,0));
 			bullets.forEach(bullet -> bullet.body.setLinearVelocity(0,0));
 			player.body.setLinearVelocity(0,0);
-			enemyCount = 2;
+			enemyCount = 1;
 			damageUpdateCount = 0;
 			speedUpdateCount = 0;
 			healthUpdateCount = 0;
@@ -458,23 +465,19 @@ public class MyGdxGame extends ApplicationAdapter {
 		batch.draw(RedRect, 37, 417, 71*player.health/Const.playerHealth, 11);
 	}
 	public void drawPlayerUpgrades(Batch batch){
-		font.draw(batch, "Damage upgrades", 140, 170);
-		font.draw(batch, "Speed upgrades", 343, 170);
-		font.draw(batch, "Health upgrades", 547, 170);
-
 		for (int i = 0; i < 3; i++) {
 			for (int j = 0; j < 3; j++) {
-				batch.draw(WhiteRect, 160 + i*200, 50 + j*30, 80, 20);
+				batch.draw(WhiteRect, 160 + i*200, 100 + j*30, 80, 20);
 			}
 		}
 		for (int i = 0; i < damageUpdateCount; i++) {
-			batch.draw(RedRect, 162, 52 + i*30, 76, 16);
+			batch.draw(RedRect, 162, 102 + i*30, 76, 16);
 		}
 		for (int i = 0; i < speedUpdateCount; i++) {
-			batch.draw(RedRect, 362, 52 + i*30, 76, 16);
+			batch.draw(RedRect, 362, 102 + i*30, 76, 16);
 		}
 		for (int i = 0; i < healthUpdateCount; i++) {
-			batch.draw(RedRect, 562, 52 + i*30, 76, 16);
+			batch.draw(RedRect, 562, 102 + i*30, 76, 16);
 		}
 	}
 }
