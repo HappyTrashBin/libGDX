@@ -47,6 +47,10 @@ public class MyGdxGame extends ApplicationAdapter {
 	private TextureRegion backgroundTextureMain;
 	private TextureRegion backgroundTextureOver;
 	private TextureRegion backgroundTextureWin;
+	private TextureRegion forge;
+	private TextureRegion farm;
+	private TextureRegion camp;
+	private TextureRegion mark;
 	private TextureRegion WhiteRect;
 	private TextureRegion RedRect;
 	private TextureRegion pauseTexture;
@@ -67,27 +71,32 @@ public class MyGdxGame extends ApplicationAdapter {
 		createBoarders(width,height);
 		createNewEnemies(enemyCount);
 
-		buildings.add(new Building(200,200,50,50, 1, 30));
-		buildings.add(new Building(400,300,50,50, 2, 10));
-		buildings.add(new Building(550,150,50,50, 3, 15));
 
 		batch = new SpriteBatch();
 		backgroundTextureTitle = new TextureRegion(new Texture("title.jpg"), 1600, 900);
 		backgroundTextureMain = new TextureRegion(new Texture("field.png"), 1600, 900);
 		backgroundTextureOver = new TextureRegion(new Texture("game_over.png"), 1600, 900);
 		backgroundTextureWin = new TextureRegion(new Texture("game_win.png"), 1600, 900);
+		forge = new TextureRegion(new Texture("forge.png"), 900, 620);
+		farm = new TextureRegion(new Texture("farm.png"), 900, 800);
+		camp = new TextureRegion(new Texture("camp.png"), 920, 493);
+		mark = new TextureRegion(new Texture("mark.png"), 675, 627);
 		pauseTexture = new TextureRegion(new Texture("pause.png"), 320, 180);
 		WhiteRect = new TextureRegion(new Texture("WhiteRect.png"), 400, 100);
 		RedRect = new TextureRegion(new Texture("RedRect.png"), 400, 100);
 		font = new BitmapFont();
 		font.setColor(0,0,0,1);
 		music = Gdx.audio.newMusic(Gdx.files.internal("Persona_4_specialist.mp3"));
+
+		buildings.add(new Building(200,200,50,50, 1, 30, forge));
+		buildings.add(new Building(400,300,50,50, 2, 10, farm));
+		buildings.add(new Building(550,150,50,50, 3, 15, camp));
 	}
 	@Override
 	public void render () {
 		music.play();
 		music.setLooping(true);
-		music.setVolume(0.1f);
+		music.setVolume(0.01f);
 		if (currentScreen == Screen.TITLE) {
 			batch.begin();
 			batch.draw(backgroundTextureTitle, 0, 0);
@@ -184,19 +193,17 @@ public class MyGdxGame extends ApplicationAdapter {
 
 			boolean contact = false;
 			for (Building building : buildings) {
-				if (!building.upgraded) {
-					batch.draw(WhiteRect,
+				batch.draw(building.texture,
+						building.getX() - building.getWidth(),
+						building.getY() - building.getHeight(),
+						building.getWidth() * 2,
+						building.getHeight() * 2);
+				if (building.upgraded) {
+					batch.draw(mark,
 							building.getX() - building.getWidth(),
-							building.getY() - building.getHeight(),
-							building.getWidth() * 2,
-							building.getHeight() * 2);
-				}
-				else {
-					batch.draw(RedRect,
-							building.getX() - building.getWidth(),
-							building.getY() - building.getHeight(),
-							building.getWidth() * 2,
-							building.getHeight() * 2);
+							building.getY() + building.getHeight() - building.getHeight() * 2/5,
+							building.getWidth() * 2/5,
+							building.getHeight() * 2/5);
 				}
 				if (Gdx.input.getX()/2 > building.getX() - building.getWidth()
 						&& Gdx.input.getX()/2 < building.getX() + building.getWidth()
@@ -443,11 +450,11 @@ public class MyGdxGame extends ApplicationAdapter {
 		int pos;
 		float playerPos;
 		if (isX) {
-			pos = MathUtils.random(Gdx.graphics.getWidth()/2);
+			pos = MathUtils.random(1, Gdx.graphics.getWidth()/2);
 			playerPos = player.body.getPosition().x * PPM;
 		}
 		else {
-			pos = MathUtils.random(Gdx.graphics.getHeight()/2);
+			pos = MathUtils.random(1, Gdx.graphics.getHeight()/2);
 			playerPos = player.body.getPosition().y * PPM;
 		}
 
