@@ -16,4 +16,5 @@ public final class Const {
     public static int enemiesHealth = 100;
     public static int enemiesDamage = 20;
     public static int enemiesSpeed = 2;
+    public static int volume = 1;
 }

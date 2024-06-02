@@ -10,17 +10,7 @@ public class Entity {
     private final short mBits;
     private final int ID;
     private final float density;
-    public Entity(World world,
-                  float x,
-                  float y,
-                  float width,
-                  float height,
-                  short cBits,
-                  short mBits,
-                  int ID,
-                  boolean isStatic,
-                  boolean isRound,
-                  float density) {
+    public Entity(World world, float x, float y, float width, float height, short cBits, short mBits, int ID, boolean isStatic, boolean isRound, float density) {
         this.width = width;
         this.height = height;
         this.cBits = cBits;

@@ -96,12 +96,18 @@ public class MyGdxGame extends ApplicationAdapter {
 	public void render () {
 		music.play();
 		music.setLooping(true);
-		music.setVolume(0.01f);
+		music.setVolume(Const.volume/100f);
 		if (currentScreen == Screen.TITLE) {
 			batch.begin();
 			batch.draw(backgroundTextureTitle, 0, 0);
 			if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
 				currentScreen = Screen.MAIN_GAME;
+			}
+			if (Gdx.input.isKeyPressed(Input.Keys.W) && Const.volume < 100) {
+				Const.volume += 1;
+			}
+			if (Gdx.input.isKeyPressed(Input.Keys.S) && Const.volume > 0) {
+				Const.volume -= 1;
 			}
 			batch.end();
 		}
@@ -183,14 +189,11 @@ public class MyGdxGame extends ApplicationAdapter {
 			batch.begin();
 			batch.draw(backgroundTextureMain, 0, 0);
 			Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
 			font.draw(batch, "Points", 5, 445);
 			font.draw(batch, String.valueOf(score), 5, 428);
-
 			font.draw(batch, "More enemies and player speed (30)", 200-110, 200-50);
 			font.draw(batch, "More enemies and player damage (10)", 400-110, 300-50);
 			font.draw(batch, "More enemies and player health (15)", 550-110, 150-50);
-
 			boolean contact = false;
 			for (Building building : buildings) {
 				batch.draw(building.texture,
@@ -231,12 +234,10 @@ public class MyGdxGame extends ApplicationAdapter {
 				}
 			}
 			contact = false;
-
 			if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
 				createNewGame();
 				gameWin = false;
 			}
-
 			batch.end();
 		}
 	}
