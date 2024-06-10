@@ -225,7 +225,6 @@ public class MyGdxGame extends ApplicationAdapter {
 							Const.enemiesHealth += 5;
 						}
 						score -= building.points;
-						System.out.println("Contact "+building.ID);
 						contact = true;
 					}
 				}
