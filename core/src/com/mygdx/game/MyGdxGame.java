@@ -29,7 +29,6 @@ public class MyGdxGame extends ApplicationAdapter {
 	private final ArrayList<Bullet> bullets = new ArrayList<>();
 	private ArrayList<Building> buildings = new ArrayList<>();
 	private ArrayList<Body> damageList = new ArrayList<>();
-	private Box2DDebugRenderer b2dr;
 	private final float PPM = Const.PPM;
 	private int enemyCount = 1;
 	private Screen currentScreen = Screen.TITLE;
@@ -65,7 +64,6 @@ public class MyGdxGame extends ApplicationAdapter {
 		resize(width/2, height/2);
 		world = new World(new Vector2(0,0), false);
 		world.setContactListener(new CollisionProcessing());
-		b2dr = new Box2DDebugRenderer();
 
 		createNewPlayer();
 		createBoarders(width,height);
@@ -143,7 +141,6 @@ public class MyGdxGame extends ApplicationAdapter {
 				batch.draw(pauseTexture, 640/2, 360/2, 160, 80);
 			}
 			update(player.gameOver);
-			b2dr.render(world, camera.combined.scl(PPM));
 			batch.end();
 		}
 		else if (currentScreen == Screen.GAME_OVER) {
@@ -249,7 +246,6 @@ public class MyGdxGame extends ApplicationAdapter {
 	public void dispose () {
 		batch.dispose();
 		world.dispose();
-		b2dr.dispose();
 	}
 	public void update(boolean gameOver) {
 		world.step(1/60f, 6, 2);
@@ -284,6 +280,17 @@ public class MyGdxGame extends ApplicationAdapter {
 			speedUpdateCount = 0;
 			healthUpdateCount = 0;
 			score = 0;
+			for (Building building : buildings) {
+				building.upgraded = false;
+			}
+			Const.playerSpeed = 5;
+			Const.enemiesSpeed = 2;
+
+			Const.playerDamage = 25;
+			Const.enemiesDamage = 20;
+
+			Const.playerHealth = 100;
+			Const.enemiesHealth = 100;
 
 			currentScreen = Screen.GAME_OVER;
 		}
